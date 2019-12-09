@@ -1,5 +1,5 @@
 // Aoc.cpp : This file contains the 'main' function. Program execution begins and ends there.
-// Day 7: Amplification Circuit 
+//--- Day 9: Sensor Boost ---
 #include "stdafx.h"
 #include "catch.hpp"
 #include "Utils.h"
@@ -65,10 +65,15 @@ struct Program {
     return static_cast<AccMode>(GetDigit((size_t)inst, idx + 1));
   }
 
-  int_t GetExpand(size_t pos)
+  void Expand(size_t pos)
   {
     if (pos >= instructions.size())
       instructions.resize(pos + 1);
+  }
+
+  int_t GetExpand(size_t pos)
+  {
+    Expand(pos);
 
     return instructions[pos];
   }
@@ -106,8 +111,8 @@ struct Program {
   void Store(size_t param3Idx, int_t val)
   {
     auto idx = (size_t)GetParam(3);
-    if (idx >= instructions.size())
-      instructions.resize(idx + 1);
+
+    Expand(idx);
 
     instructions[idx] = val;
 
