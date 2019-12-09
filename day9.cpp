@@ -21,6 +21,8 @@ struct Program {
   vector<LONGLONG> regA, output;
   size_t crPos;
   int_t base;
+  stringstream logStream;
+  stringstream logDataStream;
 
   struct InstrData
   {
@@ -28,25 +30,26 @@ struct Program {
     std::function<bool()> exec;
     int paramCount;
     string name;
+    string lead;
 
-    InstrData(int o, std::function<bool()> e, int p, string s) :opCode(o), exec(e), paramCount(p), name(s) {}
+    InstrData(int o, std::function<bool()> e, int p, string s, string l) :opCode(o), exec(e), paramCount(p), name(s), lead(l) {}
   };
 
   map<int, InstrData> map;
 
-  Program(const vector<int_t> & pr, const vector<int_t>& in) :instructions(pr), crPos(0), regA(in), base(0)
+  Program(const vector<int_t>& pr, const vector<int_t>& in) :instructions(pr), crPos(0), regA(in), base(0)
   {
-    vector<InstrData> instrList{ 
-      // Code Name Param Sign
-      { 1, bind(&Program::Add,    this),    3, "+"        },
-      { 2, bind(&Program::Mul,    this),    3, "*"        },
-      { 3, bind(&Program::Read,   this),    1, "input"    },
-      { 4, bind(&Program::Print,  this),    1, "print"    },
-      { 5, bind(&Program::Jump,   this),    2, "jump"     },
-      { 6, bind(&Program::JumpNot,this),    2, "jump not" },
-      { 7, bind(&Program::Less,   this),    3, "<"        },
-      { 8, bind(&Program::Equal,  this),    3, "=="       },
-      { 9, bind(&Program::IncBase,this),    1, "Base+="   }
+    vector<InstrData> instrList{
+      // Code Name                  ParamCount Sign      LogLead
+      { 1, bind(&Program::Add,    this),    3, "+"       , ""             }, // LogLead empty only for 3 operators use v[3]
+      { 2, bind(&Program::Mul,    this),    3, "*"       , ""             },
+      { 3, bind(&Program::Read,   this),    1, ""        , " INP    -> "      },
+      { 4, bind(&Program::Print,  this),    1, ""        , " OUT    <- "      },
+      { 5, bind(&Program::Jump,   this),    2, " ?  "    , " IP     <- "      },
+      { 6, bind(&Program::JumpNot,this),    2, " !? "    , " IP     <- "      },
+      { 7, bind(&Program::Less,   this),    3, "<"       , ""                },
+      { 8, bind(&Program::Equal,  this),    3, "=="      , ""                },
+      { 9, bind(&Program::IncBase,this),    1, ""        , " BAS    += "   }
     };
 
     for (auto i : instrList)
@@ -55,7 +58,7 @@ struct Program {
 
   static size_t GetDigit(size_t v, size_t idx)
   {
-    size_t d = v / (size_t) pow(10u, idx);
+    size_t d = v / (size_t)pow(10u, idx);
     return d % 10;
   }
 
@@ -79,7 +82,7 @@ struct Program {
   }
   int_t GetParam(size_t idx)
   {
-    cout << "{" << idx << ": ";
+    //logStream << "{" << idx << ": ";
 
     auto mode = GetParamMode(idx);
 
@@ -88,14 +91,16 @@ struct Program {
     switch (mode)
     {
     case AccMode::positional:
-      cout << "v[" << v << "]=";
+      logStream << "v[" << v << "]";
       res = (idx == 3) ? v : GetExpand((size_t)v);
       break;
     case AccMode::immediate:
+      logStream << v << " ";
+
       res = v;
       break;
     case AccMode::relative:
-      cout << "v[base+" << v << "]=";
+      logStream << "v[base+" << v << "]";
 
       res = (idx == 3) ? v + base : GetExpand((size_t)(v + base));
       break;
@@ -103,7 +108,7 @@ struct Program {
       exit(1);
     }
 
-    cout << res << "} ";
+    //logStream << res << "} ";
 
     return res;
   }
@@ -114,9 +119,9 @@ struct Program {
 
     Expand(idx);
 
-    instructions[idx] = val;
+    logDataStream << "     [" << idx << "]: " << instructions[idx] << " -> " << val;
 
-    cout << "now: " << val;
+    instructions[idx] = val;
   }
 
   bool Add()
@@ -137,12 +142,16 @@ struct Program {
     Store(2, regA.front());
 
     regA.erase(regA.begin());
+    
     return true; // advance
   }
 
   bool Print()
   {
     output.push_back(GetParam(1));
+    
+    logDataStream << "     OUT +=" << output.back();
+
     return true; // advance
   }
 
@@ -150,8 +159,15 @@ struct Program {
   {
     if (GetParam(1))
     {
-      crPos = (size_t) GetParam(2);
+      crPos = (size_t)GetParam(2);
+
+      logDataStream << "     IP <- " << crPos;
+
       return false; // don't advance
+    }
+    else
+    {
+      logDataStream << "     SKIP JUMP";
     }
 
     return true; // advance
@@ -161,8 +177,15 @@ struct Program {
   {
     if (GetParam(1) == 0)
     {
-      crPos = (size_t) GetParam(2);
+      crPos = (size_t)GetParam(2);
+
+      logDataStream << "     IP <- " << crPos;
+
       return false; // don't advance
+    }
+    else
+    {
+      logDataStream << "     SKIP JUMP";
     }
 
     return true; // advance
@@ -182,30 +205,72 @@ struct Program {
 
   bool IncBase()
   {
+    logDataStream << "     BASE : " << std::setw(5) << base << " -> ";
+
     base += GetParam(1);
 
-    cout << "Base=" << base;
+    logDataStream << base;
 
     return true;
   }
 
   void Log(const InstrData& inst)
   {
-    cout << endl << crPos << " -> " << (size_t)instructions[crPos] << ": " << inst.name << " ";
+    stringstream codeLog;
+
+    logStream.str("");
+    codeLog.str("");
+
+    codeLog << endl << std::setfill(' ') << std::setw(5) << crPos << " -> " << std::setw(5) << (size_t)instructions[crPos] << ": ";
+
+    // v[56543] =  | IP  <- .....
+    if (inst.lead.empty())
+    {
+      assert(inst.paramCount == 3);
+      GetParam(3);
+      logStream << " <- ";
+    }
+    else
+    {
+      logStream << inst.lead;
+    }
+
+    cout << codeLog.str() << std::setw(30) << logStream.str();
+
+    logStream.str("");
+
+    // v[first]
+    GetParam(1);
+
+    // +
+    logStream << std::setw(4) << inst.name;
+
+    // v[second]
+    if (inst.paramCount >= 2)
+      GetParam(2);
+
+    cout << std::setw(18) << logStream.str();
+
+    // data change during / after exec
   }
 
   void Run()
   {
     while (instructions[crPos] != 99)
     {
+      
       auto inst = (size_t)instructions[crPos] % 100;
       const auto& instData = map.find(inst)->second;
-      
+
       Log(instData);
+
+      logDataStream.str("");
 
       bool adv = instData.exec();
       if (adv)
         crPos += instData.paramCount + 1;
+
+      cout << logDataStream.str();
     }
   }
 };
@@ -213,7 +278,7 @@ struct Program {
 struct Solve {
   Input back;
 
-  Solve(string inStr) 
+  Solve(string inStr)
   {
     static const regex colsRxToken(",");
     forEachRxToken(inStr, colsRxToken, [&](string instr) {
