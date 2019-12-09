@@ -32,7 +32,7 @@ struct Solve {
     return (pos + step) % vec->size();
   }
 
-  void applymode (LONGLONG& p, LONGLONG mode, LONGLONG v)
+  void applymode(LONGLONG& p, LONGLONG mode, LONGLONG v)
   {
     if (mode == 1) //imd
       p = v;
@@ -52,7 +52,7 @@ struct Solve {
     }
   }
 
-  void applymode3 (LONGLONG& p, LONGLONG mode, LONGLONG v)
+  void applymode3(LONGLONG& p, LONGLONG mode, LONGLONG v)
   {
     if (mode == 1) //imd
       p = v;
@@ -65,6 +65,14 @@ struct Solve {
 
       p = (*vec)[v + base];
     }
+  }
+
+  void applymode4(LONGLONG& p, LONGLONG mode, LONGLONG v)
+  {
+    if (mode == 2) //imd
+      p = v + base;
+    else
+      p = v;
   }
 
   bool Exec(LONGLONG& pos)
@@ -114,8 +122,9 @@ struct Solve {
     case 3:
     {
       first = (*vec)[next(pos, 1)];
-      vFirst = first;
+      applymode4(vFirst, mode1, first);
 
+      
       pos = next(pos, 2);
     }
     break;
@@ -170,13 +179,13 @@ struct Solve {
       applymode(vFirst, mode1, first);
 
       base += vFirst;
-      
+
       print << "BASE += " << vFirst << " Now: " << base << " Inst: " << oinstr << endl;
 
       break;
     }
 
-//    auto print []
+    //    auto print []
 
     LONGLONG res = 0;
     if (opCode == 1)
@@ -186,7 +195,7 @@ struct Solve {
       if (vThird >= vec->size())
         vec->resize(vThird + 5);
 
-      (*vec)[vThird] = res;      
+      (*vec)[vThird] = res;
 
       print << "[" << vThird << "] = " << vFirst << " + " << vSecond << "(" << res << ")" << " Inst: " << oinstr << endl;
 
@@ -216,9 +225,9 @@ struct Solve {
       {
         cout << "ThRead" << endl;
       }
-      
-      print << "[" << vFirst << "] = " << regA.front()  << " READ Inst: " << oinstr << endl;
-            
+
+      print << "[" << vFirst << "] = " << regA.front() << " READ Inst: " << oinstr << endl;
+
       (*vec)[vFirst] = regA.front();
       //remove(regA.erase(regA.begin(), regA.end());
       regA.erase(regA.begin());
@@ -258,7 +267,7 @@ struct Solve {
         (*vec)[vThird] = 1;
       else
         (*vec)[vThird] = 0;
-      
+
       print << "[" << vThird << "] = " << vFirst << " < " << vSecond << "(" << (*vec)[vThird] << ")" << " Inst: " << oinstr << endl;
 
     }
@@ -284,7 +293,7 @@ struct Solve {
     }
 
     if (1)
-      cout << print.str() ;
+      cout << print.str();
 
     return true;
   }
@@ -293,7 +302,6 @@ struct Solve {
 
   LONGLONG Do(vector<LONGLONG> a)
   {
-    LONGLONG prev = 0;
     Input amp = back;
     //for (auto i : a)
     {
@@ -309,7 +317,7 @@ struct Solve {
       }
 
       cout << pos;
-      //prev = outputs.back();
+      outputs.back();
     }
     return outputs.back();
   }
