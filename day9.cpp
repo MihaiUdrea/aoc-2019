@@ -70,6 +70,7 @@ struct Solve {
   bool Exec(LONGLONG& pos)
   {
     LONGLONG instr = (*vec)[pos];
+    LONGLONG oinstr = (*vec)[pos];
     LONGLONG opCode = instr % 100;
     instr = instr / 100;
 
@@ -84,6 +85,11 @@ struct Solve {
 
     LONGLONG first, second, third;
     LONGLONG vFirst, vSecond, vThird;
+
+    stringstream print;
+
+    cout << pos << " -> ";
+
 
     switch (opCode)
     {
@@ -161,23 +167,40 @@ struct Solve {
       first = (*vec)[next(pos, 1)];
       pos = next(pos, 2);
 
-      base += first;
+      applymode(vFirst, mode1, first);
+
+      base += vFirst;
       
+      print << "BASE += " << vFirst << " Now: " << base << " Inst: " << oinstr << endl;
+
       break;
     }
 
-
+//    auto print []
 
     LONGLONG res = 0;
     if (opCode == 1)
     {
       res = vFirst + vSecond;
-      (*vec)[vThird] = res;
+
+      if (vThird >= vec->size())
+        vec->resize(vThird + 5);
+
+      (*vec)[vThird] = res;      
+
+      print << "[" << vThird << "] = " << vFirst << " + " << vSecond << "(" << res << ")" << " Inst: " << oinstr << endl;
+
     }
     else if (opCode == 2)
     {
       res = vFirst * vSecond;
+
+      if (vThird >= vec->size())
+        vec->resize(vThird + 5);
+
       (*vec)[vThird] = res;
+
+      print << "[" << vThird << "] = " << vFirst << " * " << vSecond << "(" << res << ")" << " Inst: " << oinstr << endl;
     }
     else if (opCode == 3)
     {
@@ -193,19 +216,41 @@ struct Solve {
       {
         cout << "ThRead" << endl;
       }
+      
+      print << "[" << vFirst << "] = " << regA.front()  << " READ Inst: " << oinstr << endl;
+            
       (*vec)[vFirst] = regA.front();
       //remove(regA.erase(regA.begin(), regA.end());
       regA.erase(regA.begin());
+
+
     }
     else if (opCode == 5) //j
     {
       if (vFirst)
+      {
         pos = vSecond;
+
+        print << "JUMP to " << vSecond << "first: " << first << " Inst: " << oinstr << endl;
+      }
+      else
+      {
+        print << "SKIP JUMP to " << vSecond << "first: " << first << " Inst: " << oinstr << endl;
+      }
+
     }
     else if (opCode == 6) // jn
     {
       if (vFirst == 0)
+      {
         pos = vSecond;
+
+        print << "JUMP to " << vSecond << "first: " << first << " Inst: " << oinstr << endl;
+      }
+      else
+      {
+        print << "SKIP JUMP to " << vSecond << "first: " << first << " Inst: " << oinstr << endl;
+      }
     }
     else if (opCode == 7) // lt
     {
@@ -213,6 +258,8 @@ struct Solve {
         (*vec)[vThird] = 1;
       else
         (*vec)[vThird] = 0;
+      
+      print << "[" << vThird << "] = " << vFirst << " < " << vSecond << "(" << (*vec)[vThird] << ")" << " Inst: " << oinstr << endl;
 
     }
     else if (opCode == 8) // eq
@@ -221,29 +268,27 @@ struct Solve {
         (*vec)[vThird] = 1;
       else
         (*vec)[vThird] = 0;
+
+      print << "[" << vThird << "] = " << vFirst << " == " << vSecond << "(" << (*vec)[vThird] << ")" << " Inst: " << oinstr << endl;
+
     }
     else if (opCode == 4)
     {
       outputs.push_back(vFirst);
+      print << "PRINT " << vFirst << " Inst: " << oinstr << endl;
+
     }
     else if (opCode == 99)
     {
       return false;
     }
 
+    if (1)
+      cout << print.str() ;
+
     return true;
   }
 
-  static LONGLONG calc(LONGLONG op, LONGLONG l, LONGLONG r)
-  {
-    return op == 1 ? l + r : l * r;
-  }
-
-  void perform(LONGLONG pos)
-  {
-    auto v = calc((*vec)[pos], (*vec)[(*vec)[next(pos, 1)]], (*vec)[(*vec)[next(pos, 2)]]);
-    (*vec)[(*vec)[next(pos, 3)]] = v;
-  };
 
 
   LONGLONG Do(vector<LONGLONG> a)
@@ -263,6 +308,7 @@ struct Solve {
         Exec(pos);
       }
 
+      cout << pos;
       //prev = outputs.back();
     }
     return outputs.back();
@@ -414,7 +460,7 @@ struct Solve {
   }
 };
 
-TEST_CASE("Sample 1", "[x.]") {
+TEST_CASE("Sample 1", "[.]") {
   cout << endl << "Tests   ------------- " << endl;
 
 
