@@ -65,7 +65,7 @@ struct Solve {
   };
 
 
-  string Do2()
+  string DoQ()
   {
     // find start
     for (auto line : irange(0, lines))
@@ -133,7 +133,7 @@ struct Solve {
   using Que = priority_queue<PointData>;
   string Do()
   {
-    map<pair<double, bool>, Que> maxAnglesList;
+    map<double, Que> maxAnglesList;
     set<Point> maxvisible;
     set<pair<Point, Point>> maxdropped;
 
@@ -141,8 +141,8 @@ struct Solve {
     Point maxPoint;
     for (auto crAst : asteroids)
     {
-      map<pair<double, bool>, Que> anglesList;
-      set<pair<double, bool>> angles;
+      map<double, Que> anglesList;
+      set<double> angles;
       set<Point> visible;
       set<pair<Point, Point>> dropped;
       for (auto otherAst : asteroids)
@@ -150,14 +150,12 @@ struct Solve {
         if (crAst == otherAst)
           continue;
 
-        bool sign = false; //otherAst.first - crAst.first == 0 ? otherAst.second < crAst.second : otherAst.first < crAst.first;
-
         auto newAngle = GetAngle(crAst, otherAst);
 
-        if (angles.find({ newAngle, sign }) != angles.end())
+        if (angles.find(newAngle) != angles.end())
         {
           //auto whereList = anglesList.find({})
-          anglesList[{ newAngle, sign }].push({ otherAst, GetDist(crAst, otherAst) });
+          anglesList[newAngle].push({ otherAst, GetDist(crAst, otherAst) });
 
           for (auto shadowingAst : visible)
           {
@@ -170,12 +168,70 @@ struct Solve {
         }
         else
         {
-          anglesList[{ newAngle, sign }].push({ otherAst, GetDist(crAst, otherAst) });
+          anglesList[newAngle].push({ otherAst, GetDist(crAst, otherAst) });
 
           visible.insert(otherAst);
         }
 
-        angles.insert({ newAngle, sign });
+        angles.insert(newAngle);
+      }
+
+      if (max < visible.size())
+      {
+        max = visible.size();
+        maxPoint = crAst;
+        maxAnglesList = anglesList;
+        maxvisible = visible;
+        maxdropped = dropped;
+      }
+    }
+
+    return ToString(max);
+  }
+
+  string Do2()
+  {
+    map<double, Que> maxAnglesList;
+    set<Point> maxvisible;
+    set<pair<Point, Point>> maxdropped;
+
+    int max = 0;
+    Point maxPoint;
+    for (auto crAst : asteroids)
+    {
+      map<double, Que> anglesList;
+      set<double> angles;
+      set<Point> visible;
+      set<pair<Point, Point>> dropped;
+      for (auto otherAst : asteroids)
+      {
+        if (crAst == otherAst)
+          continue;
+
+        auto newAngle = GetAngle(crAst, otherAst);
+
+        if (angles.find(newAngle) != angles.end())
+        {
+          //auto whereList = anglesList.find({})
+          anglesList[newAngle].push({ otherAst, GetDist(crAst, otherAst) });
+
+          for (auto shadowingAst : visible)
+          {
+            if (GetAngle(crAst, shadowingAst) == newAngle)
+            {
+              dropped.insert({ otherAst, shadowingAst });
+              break;
+            }
+          }
+        }
+        else
+        {
+          anglesList[newAngle].push({ otherAst, GetDist(crAst, otherAst) });
+
+          visible.insert(otherAst);
+        }
+
+        angles.insert(newAngle);
       }
 
       if (max < visible.size())
@@ -192,7 +248,7 @@ struct Solve {
   }
 };
 
-TEST_CASE("Sample 1", "[x.]") {
+TEST_CASE("Sample 1", "[.]") {
   cout << endl << "Tests   ------------- " << endl;
 
   //  REQUIRE(Solve("1,9,10,3,2,3,11,0,99,30,40,50").Do() == "3500"); // sample test
@@ -201,15 +257,20 @@ TEST_CASE("Sample 1", "[x.]") {
   REQUIRE(Solve(ReadFileToString(L"sample/sample3.txt")).Do() == ReadFileToString(L"sample/result3.txt"));
 }
 
-TEST_CASE("Part One", "[x.]") {
+TEST_CASE("Part One", "[.]") {
   cout << endl << "Part One ------------- " << endl;
   toClipboard(Solve(ReadFileToString(L"input.txt")).Do());
   //toClipboard(Solve(ReadFileToString(L"input.txt")).Do(12, 2));
 }
 
+TEST_CASE("Part 1 Tests", "[x.]") {
+  
+  REQUIRE(Solve(ReadFileToString(L"sample/sample4.txt")).Do2() == ReadFileToString(L"sample/result4.txt"));
+}
+
 TEST_CASE("Part Two", "[.]") {
   cout << endl << "Part Two ------------- " << endl;
 
-  toClipboard(Solve(ReadFileToString(L"input.txt")).Do());
+  toClipboard(Solve(ReadFileToString(L"input.txt")).Do2());
 }
 
