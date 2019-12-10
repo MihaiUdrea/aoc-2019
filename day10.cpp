@@ -11,6 +11,8 @@
 #include "Utils.h"
 #include <math.h> 
 
+#define PI 3.14159265
+
 using Point = pair<int, int>;
 struct PointData
 {
@@ -106,10 +108,9 @@ struct Solve {
     return "asdf";
   }
 
-  double GetAngle(Point crAst, Point otherAst)
+  static double GetAngle(Point crAst, Point otherAst)
   {
-    double newAngle = atan2(otherAst.second - crAst.second, otherAst.first - crAst.first);
-
+    double newAngle = atan2(otherAst.second - crAst.second, otherAst.first - crAst.first) * 180 / PI;
 
     /*if (otherAst.second - crAst.second == 0)
     {
@@ -265,6 +266,14 @@ TEST_CASE("Part One", "[.]") {
 
 TEST_CASE("Part 1 Tests", "[x.]") {
   
+  REQUIRE(Solve::GetAngle({ 0, 0 }, { 0, -1 }) == Approx(0));
+  REQUIRE(Solve::GetAngle({ 0, 0 }, { 1, -1 }) == Approx(45));
+  REQUIRE(Solve::GetAngle({ 0, 0 }, { 1,  0 }) == Approx(90));
+  REQUIRE(Solve::GetAngle({ 0, 0 }, { 1,  1 }) == Approx(135));
+  REQUIRE(Solve::GetAngle({ 0, 0 }, { 0,  1 }) == Approx(180));
+  REQUIRE(Solve::GetAngle({ 0, 0 }, { -1,  1 }) == Approx(225));
+  REQUIRE(Solve::GetAngle({ 0, 0 }, { -1,  0 }) == Approx(270));
+
   REQUIRE(Solve(ReadFileToString(L"sample/sample4.txt")).Do2() == ReadFileToString(L"sample/result4.txt"));
 }
 
