@@ -22,12 +22,16 @@ enum Direction
   MAX
 };
 
+enum Color
+{
+  black,
+  white
+};
+
 struct Point
 {
   int y = 0;
   int x = 0;
-
-  //Point(int y = 0, int x = 0) : y(y), x(x) {}
 
   auto operator<=>(const Point&) const = default;
   auto operator+(const Point& l) { return Point{ y + l.y, x + l.x }; };
@@ -39,6 +43,8 @@ map<Direction, Point> deltaMove = {
 { Direction::down,  { 1,  0}},
 { Direction::left,  { 0, -1}}
 };
+
+vector<Direction> changeDir = { Direction::left, Direction::right };
 
 using int_t = LONGLONG;
 
@@ -247,7 +253,7 @@ struct Program {
     return true;
   }
 
-  void Log(const InstrData& inst)
+  int Log(const InstrData& inst)
   {
     stringstream codeLog;
 
@@ -285,17 +291,20 @@ struct Program {
     cout << std::setw(18) << logStream.str();
 
     // data change during / after exec
+
+    return 0;
   }
 
-  void Run()
+  void Run(int outputSizeBreak = 0)
   {
+    bool log = false;
     while (instructions[crPos] != 99)
     {
 
       auto inst = (size_t)instructions[crPos] % 100;
       const auto& instData = map.find(inst)->second;
 
-      //Log(instData);
+      log ?Log(instData):1;
 
       logDataStream.str("");
 
@@ -303,9 +312,9 @@ struct Program {
       if (adv)
         crPos += instData.paramCount + 1;
 
-      //cout << logDataStream.str();
+      log ? (cout << logDataStream.str()) : cout;
 
-      if (output.size() == 2)
+      if (outputSizeBreak > 0 && output.size() == outputSizeBreak)
         break;
     }
   }
@@ -313,6 +322,7 @@ struct Program {
 
 struct Solve {
   Input back;
+  array<set<Point>, Color::white + 1> paintedLists;
 
   Solve(string inStr)
   {
@@ -322,9 +332,8 @@ struct Solve {
       });
   };
 
-  int_t Do(vector<int_t> a)
+  int_t JustRun(vector<int_t> a)
   {
-
     Program p(back, a);
 
     p.Run();
@@ -332,99 +341,85 @@ struct Solve {
     return p.output.back();
   }
 
-  int_t DoNew(vector<int_t> a)
+  int Do(vector<int_t> a)
   {
     Program p(back, a);
 
     Point crPoint;
     Direction direction = Direction::up;
 
-    set<Point> paintedWhite;
-    set<Point> paintedBlack;
     do
     {
       p.output.clear();
 
-      p.Run();
+      p.Run(2);
 
       if (p.output.size() == 2)
       {
+        size_t out = (size_t)p.output.front();
 
-        // mark new color
-        if (p.output.front() == 0)
-        {
-          // black
-          paintedBlack.insert(crPoint);
-          paintedWhite.erase(crPoint);
-        }
-        else
-        {
-          // white
-          assert(p.output.front() == 1);
+        auto & toAdd = paintedLists[out];
+        auto & toRemove = paintedLists[1 - out];
 
-          paintedWhite.insert(crPoint);
-          paintedBlack.erase(crPoint);
-        }
+        toAdd.insert(crPoint);
+        toRemove.erase(crPoint);
 
-        // orient robot
-        
-        direction = (Direction)((direction + Direction::MAX + (p.output.back() == 0 ? - 1 : 1)) % Direction::MAX);
+        // orient robot        
+        direction = Direction((direction + changeDir[(size_t)p.output.back()]) % Direction::MAX);
 
         // move robot
         crPoint = crPoint + deltaMove[direction];
       }
 
-      if (paintedWhite.find(crPoint) != paintedWhite.end())
+      if (contains(paintedLists[Color::white],crPoint))
         p.regA = { 1 };
       else
         p.regA = { 0 };
 
     } while (p.output.size() == 2);
 
+    return paintedLists[Color::black].size() + paintedLists[Color::white].size();
+  }
+
+  void Do2(vector<int_t> a)
+  {
+    Do(a);
+
     // print white
     {
-      for (auto i : irange(0, 50))
+      auto minMaxX = minmax_element(paintedLists[Color::white].begin(), paintedLists[Color::white].end(), [](auto& l, auto& r) {
+        return l.x < r.x;
+        });
+      auto minMaxY = minmax_element(paintedLists[Color::white].begin(), paintedLists[Color::white].end(), [](auto& l, auto& r) {
+        return l.y < r.y;
+        });
+
+      for (auto y : irange(minMaxY.first->y, minMaxY.second->y + 1))
       {
         cout << endl;
-        for (auto j : irange(0, 50))
-          if (paintedWhite.find({ i,j }) == paintedWhite.end())
-            cout << " ";
-          else
-            cout << "#";
+        for (auto x : irange(minMaxY.first->x, minMaxY.second->x + 1))
+          cout << (contains(paintedLists[Color::white], Point{ y,x }) ? "#" : " ");
       }
+      cout << endl;
     }
-
-
-    return paintedBlack.size() + paintedWhite.size();
   }
 };
 
-TEST_CASE("Sample 1", "[.]") {
-
+TEST_CASE("Sample 1", "[x.]") {
   cout << endl << "Tests   ------------- " << endl;
 
-  REQUIRE(Solve("109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99").Do({}) == 99); // print yourself 
-  REQUIRE(Solve("1102,34915192,34915192,7,4,7,99,0").Do({ }) == 1219070632396864); // some val test
-  REQUIRE(Solve("104,1125899906842624,99").Do({  }) == 1125899906842624); // huge test
-  REQUIRE(Solve(ReadFileToString(L"input2.txt")).Do({ 1 }) == 2465411646); // sample test
+  REQUIRE(Solve("109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99").JustRun({}) == 99); // print yourself 
+  REQUIRE(Solve("1102,34915192,34915192,7,4,7,99,0").JustRun({ }) == 1219070632396864); // some val test
+  REQUIRE(Solve("104,1125899906842624,99").JustRun({  }) == 1125899906842624); // huge test
+  //REQUIRE(Solve(ReadFileToString(L"input2.txt")).JustRun({ 1 }) == 2465411646); // sample test
   //REQUIRE(Solve(ReadFileToString(L"input.txt")).Do({ 2 }) == 69781); // sample test
 }
 
 TEST_CASE("New1", "[x.]") {
-
-  cout << endl << "Tests   ------------- " << endl;
-
-
-  toClipboard((int) Solve(ReadFileToString(L"input.txt")).DoNew({ 0 }));
-
+  toClipboard((int) Solve(ReadFileToString(L"input.txt")).Do({ 0 }));
 }
 
 TEST_CASE("New2", "[x.]") {
-
-  cout << endl << "Tests   ------------- " << endl;
-
-
-  toClipboard((int) Solve(ReadFileToString(L"input.txt")).DoNew({ 1 }));
-
+  Solve(ReadFileToString(L"input.txt")).Do2({ 1 });
 }
 
