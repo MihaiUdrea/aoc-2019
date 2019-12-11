@@ -341,7 +341,7 @@ struct Solve {
     return p.output.back();
   }
 
-  int Do(vector<int_t> a)
+  int Do(const vector<int_t> &a)
   {
     Program p(back, a);
 
@@ -371,17 +371,13 @@ struct Solve {
         crPoint = crPoint + deltaMove[direction];
       }
 
-      if (contains(paintedLists[Color::white],crPoint))
-        p.regA = { 1 };
-      else
-        p.regA = { 0 };
-
+      p.regA = { contains(paintedLists[Color::white],crPoint) };
     } while (p.output.size() == 2);
 
     return paintedLists[Color::black].size() + paintedLists[Color::white].size();
   }
 
-  void Do2(vector<int_t> a)
+  void Do2(const vector<int_t> & a)
   {
     Do(a);
 
