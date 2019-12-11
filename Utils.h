@@ -148,15 +148,26 @@ auto match_rx(const basic_string<_Elem, _StTraits, _StAlloc>& _Str,
 }
 
 template <class _CollectionType, class _Ty>
-inline bool contains(const _CollectionType & _Collection, const _Ty & _Val)
+inline bool contains(const _CollectionType& _Collection, const _Ty& _Val)
 {
   return find(_Collection.begin(), _Collection.end(), _Val) != _Collection.end();
 }
 
 template <class _CollectionType, class _Pr>
-inline bool contains_pred(const _CollectionType & _Collection, _Pr _Pred)
+inline bool contains_pred(const _CollectionType& _Collection, _Pr _Pred)
 {
   return find_if(_Collection.begin(), _Collection.end(), _Pred) != _Collection.end();
 }
+
+
+struct Point
+{
+  int y = 0;
+  int x = 0;
+
+  auto operator<=>(const Point&) const = default;
+  auto operator+(const Point& l) { return Point{ y + l.y, x + l.x }; };
+};
+
 
 #endif // UTILS_H
