@@ -147,5 +147,16 @@ auto match_rx(const basic_string<_Elem, _StTraits, _StAlloc>& _Str,
   return _Matches;
 }
 
+template <class _CollectionType, class _Ty>
+inline bool contains(const _CollectionType & _Collection, const _Ty & _Val)
+{
+  return find(_Collection.begin(), _Collection.end(), _Val) != _Collection.end();
+}
+
+template <class _CollectionType, class _Pr>
+inline bool contains_pred(const _CollectionType & _Collection, _Pr _Pred)
+{
+  return find_if(_Collection.begin(), _Collection.end(), _Pred) != _Collection.end();
+}
 
 #endif // UTILS_H
