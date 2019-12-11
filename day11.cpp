@@ -1,5 +1,5 @@
 // Aoc.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//--- Day 9: Sensor Boost ---
+//--- Day 11: Space Police ----
 #include "stdafx.h"
 #include "catch.hpp"
 #include "Utils.h"
@@ -10,6 +10,34 @@ enum class AccMode
   positional,
   immediate,
   relative
+};
+
+enum Direction
+{
+  up,
+  right,
+  down,
+  left,
+
+  MAX
+};
+
+struct Point
+{
+  int y = 0;
+  int x = 0;
+
+  //Point(int y = 0, int x = 0) : y(y), x(x) {}
+
+  auto operator<=>(const Point&) const = default;
+  auto operator+(const Point& l) { return Point{ y + l.y, x + l.x }; };
+};
+
+map<Direction, Point> deltaMove = {
+{ Direction::up,    {-1,  0}},
+{ Direction::right, { 0,  1}},
+{ Direction::down,  { 1,  0}},
+{ Direction::left,  { 0, -1}}
 };
 
 using int_t = LONGLONG;
@@ -117,7 +145,7 @@ struct Program {
   {
     if (param3Idx != 3)
     {
-//      cout << "HERE" << endl;
+      //      cout << "HERE" << endl;
     }
 
     auto idx = (size_t)GetParam(param3Idx, true);
@@ -304,16 +332,12 @@ struct Solve {
     return p.output.back();
   }
 
-  using Point = pair<int, int>;
   int_t DoNew(vector<int_t> a)
   {
-
     Program p(back, a);
 
-    //p.PrintProg();
-
     Point crPoint;
-    char direction = '^';
+    Direction direction = Direction::up;
 
     set<Point> paintedWhite;
     set<Point> paintedBlack;
@@ -324,20 +348,17 @@ struct Solve {
       p.Run();
 
       if (p.output.size() == 2)
-      { 
+      {
 
         // mark new color
         if (p.output.front() == 0)
         {
           // black
-          //cout << "BLACK";
           paintedBlack.insert(crPoint);
           paintedWhite.erase(crPoint);
         }
         else
         {
-          //cout << "WHITE";
-
           // white
           assert(p.output.front() == 1);
 
@@ -345,63 +366,12 @@ struct Solve {
           paintedBlack.erase(crPoint);
         }
 
+        // orient robot
+        
+        direction = (Direction)((direction + Direction::MAX + (p.output.back() == 0 ? - 1 : 1)) % Direction::MAX);
+
         // move robot
-        if (p.output.back() == 0) // left
-        {
-          switch (direction)
-          {
-          case '^':
-            direction = '<';
-            break;
-          case '<':
-            direction = 'v';
-            break;
-          case 'v':
-            direction = '>';
-            break;
-          case '>':
-            direction = '^';
-            break;
-          }
-
-        }
-        else // right
-        {
-          switch (direction)
-          {
-          case '^':
-            direction = '>';
-            break;
-          case '>':
-            direction = 'v';
-            break;
-          case 'v':
-            direction = '<';
-            break;
-          case '<':
-            direction = '^';
-            break;
-          }
-        }
-
-        // move pos
-
-        switch (direction)
-        {
-        case '^':
-          crPoint.first--;
-          break;
-        case '>':
-          crPoint.second++;
-          break;
-        case 'v':
-          crPoint.first++;
-          break;
-        case '<':
-          crPoint.second--;
-          break;
-        }
-
+        crPoint = crPoint + deltaMove[direction];
       }
 
       if (paintedWhite.find(crPoint) != paintedWhite.end())
@@ -444,9 +414,9 @@ TEST_CASE("New1", "[x.]") {
 
   cout << endl << "Tests   ------------- " << endl;
 
-  
-  toClipboard( Solve(ReadFileToString(L"input.txt")).DoNew({ 0 }));
-  
+
+  toClipboard((int) Solve(ReadFileToString(L"input.txt")).DoNew({ 0 }));
+
 }
 
 TEST_CASE("New2", "[x.]") {
@@ -454,7 +424,7 @@ TEST_CASE("New2", "[x.]") {
   cout << endl << "Tests   ------------- " << endl;
 
 
-  toClipboard(Solve(ReadFileToString(L"input.txt")).DoNew({ 1 }));
+  toClipboard((int) Solve(ReadFileToString(L"input.txt")).DoNew({ 1 }));
 
 }
 
