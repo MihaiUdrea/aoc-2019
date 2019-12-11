@@ -1,5 +1,5 @@
 // Aoc.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//--- Day 11:
+//--- Day 9: Sensor Boost ---
 #include "stdafx.h"
 #include "catch.hpp"
 #include "Utils.h"
@@ -440,12 +440,12 @@ TEST_CASE("Sample 1", "[.]") {
   //REQUIRE(Solve(ReadFileToString(L"input.txt")).Do({ 2 }) == 69781); // sample test
 }
 
-TEST_CASE("New1", "[.]") {
+TEST_CASE("New1", "[x.]") {
 
   cout << endl << "Tests   ------------- " << endl;
 
   
-  toClipboard( Solve(ReadFileToString(L"input.txt")).DoNew({ 1 }));
+  toClipboard( Solve(ReadFileToString(L"input.txt")).DoNew({ 0 }));
   
 }
 
