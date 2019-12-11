@@ -5,13 +5,6 @@
 #include "Utils.h"
 
 
-enum class AccMode
-{
-  positional,
-  immediate,
-  relative
-};
-
 enum Direction
 {
   up,
@@ -37,11 +30,11 @@ struct Point
   auto operator+(const Point& l) { return Point{ y + l.y, x + l.x }; };
 };
 
-map<Direction, Point> deltaMove = {
-{ Direction::up,    {-1,  0}},
-{ Direction::right, { 0,  1}},
-{ Direction::down,  { 1,  0}},
-{ Direction::left,  { 0, -1}}
+vector<Point> deltaMove = {
+    {-1,  0}, // Direction::up,
+    { 0,  1}, // Direction::right
+    { 1,  0}, // Direction::down,  
+    { 0, -1}  // Direction::left
 };
 
 vector<Direction> changeDir = { Direction::left, Direction::right };
@@ -50,6 +43,13 @@ using int_t = LONGLONG;
 
 using Input = vector<int_t>;
 struct Program {
+
+  enum class AccMode
+  {
+    positional,
+    immediate,
+    relative
+  };
 
   vector<int_t> instructions;
   vector<LONGLONG> regA, output;
@@ -304,7 +304,7 @@ struct Program {
       auto inst = (size_t)instructions[crPos] % 100;
       const auto& instData = map.find(inst)->second;
 
-      log ?Log(instData):1;
+      log ? Log(instData):1;
 
       logDataStream.str("");
 
