@@ -147,27 +147,77 @@ auto match_rx(const basic_string<_Elem, _StTraits, _StAlloc>& _Str,
   return _Matches;
 }
 
-template <class _CollectionType, class _Ty>
-inline bool contains(const _CollectionType& _Collection, const _Ty& _Val)
+template <class _Col, class _Ty>
+inline bool contains(const _Col& _Collection, const _Ty & _Val)
 {
   return find(_Collection.begin(), _Collection.end(), _Val) != _Collection.end();
 }
 
-template <class _CollectionType, class _Pr>
-inline bool contains_pred(const _CollectionType& _Collection, _Pr _Pred)
+template <class _Col, class _Pr>
+inline bool contains_pred(const _Col& _Collection, _Pr _Pred)
 {
   return find_if(_Collection.begin(), _Collection.end(), _Pred) != _Collection.end();
 }
-
 
 struct Point
 {
   int y = 0;
   int x = 0;
+  int z = 0;
 
   auto operator<=>(const Point&) const = default;
-  auto operator+(const Point& l) { return Point{ y + l.y, x + l.x }; };
+  auto operator+(const Point& l) { return Point{ y + l.y, x + l.x, z + l.z }; };
+  auto operator-(const Point& l) { return Point{ y - l.y, x - l.x, z - l.z }; };
+
+  int GetAxys(int ax) const
+  {
+    switch (ax)
+    {
+    case 0:
+      return y;
+    case 1:
+      return x;
+    case 2:
+      return z;
+    default:
+      break;
+    }
+    return -1;
+  }
+
+  void IncAxyx(int ax, int v)
+  {
+    switch (ax)
+    {
+    case 0:
+      y += v;
+      break;
+    case 1:
+      x += v;
+      break;
+    case 2:
+      z += v;
+      break;
+    default:
+      break;
+    }
+  }
 };
 
+
+static int ManhDist(Point a)
+{
+  return abs(a.x) + abs(a.y) + abs(a.z);
+}
+
+size_t gcd(size_t a, size_t b) {
+  if (b == 0)
+    return a;
+  return gcd(b, a % b);
+}
+
+size_t lcm(size_t a, size_t b) {
+  return (a * b) / gcd(a, b);
+}
 
 #endif // UTILS_H
