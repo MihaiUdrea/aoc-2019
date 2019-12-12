@@ -3,7 +3,44 @@
 #include "stdafx.h"
 #include "catch.hpp"
 #include "Utils.h"
-#include "Program.h"
+
+//#define FILE_OUT_MODE ofstream::trunc
+#define FILE_OUT_MODE  ofstream::/**/trunc/** /app/**/
+
+//FILE_PRINT_LEVELS  0 -no file printing; 1 - only Print1(true) 2 Any Printf; 3 - Any PrintF and Any PrintLineF
+namespace PrintLevels {
+  enum { none, onlyExtraPrintF, anyPrintf, all };
+}
+
+#ifdef _DEBUG
+#define OUT_FILE LR"(outdebug.txt)"
+#define TEST true
+#define RUNONE false
+#define RUNTWO false
+#define FILE_PRINT_LEVEL PrintLevels::all
+#else
+#define OUT_FILE LR"(outrelease.txt)"
+#define TEST false
+#define RUNONE true
+#define RUNTWO true
+#define FILE_PRINT_LEVEL PrintLevels::onlyExtraPrintF
+#endif // DEBUG
+
+
+void PrintLineF(string line)
+{
+  if (FILE_PRINT_LEVEL < PrintLevels::all)
+    return;
+
+  ofstream cout;
+  cout.open(OUT_FILE, ofstream::app);
+
+  cout << line;
+
+  cout.close();
+}
+
+
 
 struct PointData
 {
@@ -23,14 +60,17 @@ struct Data
   //map<Point, int> dists;
   Point position;
   Point speed;
+
+  auto operator<=>(const Data&) const = default;
+
 };
 
-using Input = vector<Data>;
+using Input = array<Data, 4>;
 
 struct Solve {
   Input vec;
 
-  vector<int_t> back;
+  //vector<int_t> back;
   vector<Point> inters;
 
 
@@ -56,15 +96,16 @@ struct Solve {
     /* a1 b2 c3 */
     /* x2 yr zs */
     /* */
+    int pos = 0;
     forEachRxToken(inStr, lineRxToken, [&](string line) {
-      vec.push_back({});
+      //vec.push_back({});
 
-      static const regex matchExp(R"~([^=]+=([^,]+),[^=]+=([^,]+),[^=]+=([^>]+)>)~");      
+      static const regex matchExp(R"~([^=]+=([^,]+),[^=]+=([^,]+),[^=]+=([^>]+)>)~");
       auto res = match_rx(line, matchExp);
 
-      Point p{ atoi(res[2].str().c_str()), atoi(res[1].str().c_str()), atoi(res[3].str().c_str()) };
-      vec.back().position = p;
-
+      Point p{ stoi(res[2]), stoi(res[1]), stoi(res[3]) };
+      vec[pos].position = p;
+      pos++;
       });
     /**/
 
@@ -77,47 +118,35 @@ struct Solve {
 
   };
 
-  int_t JustRun(vector<int_t> a)
-  {
-    Program p(back, a);
-
-    p.Run();
-
-    return p.output.back();
-  }
-
+//  array<Point, 4> gravity = { Point{0,0,0}, Point{0,0,0}, Point{0,0,0}, Point{0,0,0} };
   vector<Point> gravity;
 
   void ApplyGravity()
   {
-    gravity.clear();
-    gravity.resize(vec.size());
-
+    for (auto& el : gravity)
+      el = {};
+    
     for (auto i : irange(0, 3))
     {
-      Input & v = vec;
+      if (reset.find(i) != reset.end())
+        continue;
 
-      /** /
+      Input& v = vec;
 
-      sort(v.begin(), v.end(), [&](auto& l, auto& r) {
-        return l.position.GetAxys(i) < r.position.GetAxys(i);
-        });
-      /**/
-
-      for (auto moonIdx : irange(0, v.size()))
+      for (auto moonIdx : irange(0, (int)v.size()))
       {
-        int smallerC = count_if(v.begin(), v.end(), [&](auto& l) {
+        auto smallerC = count_if(v.begin(), v.end(), [&](auto& l) {
           return l.position.GetAxys(i) < v[moonIdx].position.GetAxys(i);
           });
-        int greaterC = count_if(v.begin(), v.end(), [&](auto& l) {
+        auto greaterC = count_if(v.begin(), v.end(), [&](auto& l) {
           return l.position.GetAxys(i) > v[moonIdx].position.GetAxys(i);
           });
 
-        gravity[moonIdx].IncAxyx(i, greaterC - smallerC);
+        gravity[moonIdx].IncAxyx(i, (int)(greaterC - smallerC));
       }
 
       // apply
-      for (auto moonIdx : irange(0, vec.size()))
+      for (auto moonIdx : irange(0, (int)vec.size()))
       {
         vec[moonIdx].position.IncAxyx(i, gravity[moonIdx].GetAxys(i));
       }
@@ -128,25 +157,16 @@ struct Solve {
 
   void ApplySpeed()
   {
-    for (auto i : irange(0, 3))
+    for (auto& moon : vec)
     {
-
-      // apply
-      for (auto& moon : vec)
-      {
-        moon.position.IncAxyx(i, moon.speed.GetAxys(i));
-      }
+      moon.position = moon.position + moon.speed;
     }
 
-
     // inc speed
-    for (auto i : irange(0, 3))
+    
+    for (auto moonIdx : irange(0, (int)vec.size()))
     {
-
-      for (auto moonIdx : irange(0, vec.size()))
-      {
-        vec[moonIdx].speed.IncAxyx(i, gravity[moonIdx].GetAxys(i));
-      }
+      vec[moonIdx].speed = vec[moonIdx].speed + gravity[moonIdx];
     }
   }
 
@@ -161,50 +181,226 @@ struct Solve {
     return res;
   }
 
-  string Do()
+  void Print(size_t step)
   {
-
-    for (auto step : irange(0, 100))
+    return;
     {
-      ApplyGravity();
-      ApplySpeed();
-
-      cout << "\nAfter " << step + 1 << " steps:\n";
+      cout << "\nAfter " << step << " steps:\n";
       // print 
       for (auto moon : vec)
       {
-        cout << "pos = <x = " << moon.position.x << ", y = " << moon.position.y << ", z =" << moon.position.z << ">, vel = <x = " << moon.speed.z << ", y = " << moon.speed.y << ", z = " << moon.speed.z << ">\n";
+        cout << "pos=<x=" << std::setw(2) << moon.position.x << ", y=" << std::setw(2) << moon.position.y << ", z=" << std::setw(2) << moon.position.z << ">, vel=<x=" << std::setw(2) << moon.speed.x << ", y=" << std::setw(2) << moon.speed.y << ", z=" << std::setw(2) << moon.speed.z << ">\n";
       }
+    }
+  }
 
+  void PrintPoint(Point position)
+  {
+    //cout << "pos=<x=" << std::setw(2) << position.x << ", y=" << std::setw(2) << position.y << ", z=" << std::setw(2) << position.z << ">\n";
+  }
+
+  string Do(int steps = 1000)
+  {
+    gravity.resize(vec.size());
+
+    for (auto step : irange(0, steps))
+    {
+      Print(step);
+      ApplyGravity();
+      ApplySpeed();
     }
 
     return ToString(GetEnergy());
   }
 
+#define BITS_COUNT 10
+
+  size_t GetDimHash(const Input& a, int dim)
+  {
+    std::size_t ret = 0;
+
+    for (auto& e : a)
+    {
+      ret = ret << BITS_COUNT;
+      ret += e.position.GetAxys(dim);
+      ret = ret << BITS_COUNT;
+      ret += e.speed.GetAxys(dim);
+
+    }
+    return ret;
+  }
+  array<set<size_t>, 4> history;
+  map<size_t, size_t> reset;
+
+  void AddToHistory(Input& vec, size_t step)
+  {
+    for (auto dim : irange(0, 3))
+    {
+      if (reset.find(dim) != reset.end())
+        continue;
+
+      if (auto hash = GetDimHash(vec, dim); history[dim].find(hash) != history[dim].end())
+      {
+        cout << dim << " resets at: " << step << endl;
+        reset[dim] = step;
+      }
+      else
+        history[dim].insert(hash);
+    }
+  }
+
+  void PrintF(const Input & a, bool aExtra = false, bool aEnd = false)
+  {
+    if (FILE_PRINT_LEVEL == PrintLevels::none || (FILE_PRINT_LEVEL == PrintLevels::onlyExtraPrintF && !aExtra))
+      return;
+
+    int charWidth = 1;
+    if (aExtra)
+      charWidth = 9;
+
+    auto minX = min_element(a.begin(), a.end(), [](auto& l, auto& r) {
+      return l.position.x < r.position.x;
+      });
+    auto minY = min_element(a.begin(), a.end(), [](auto& l, auto& r) {
+      return l.position.y < r.position.y;
+      });
+    auto minZ = min_element(a.begin(), a.end(), [](auto& l, auto& r) {
+      return l.position.z < r.position.z;
+      });
+
+    Point min{ minY->position.y, minX->position.x, minZ->position.z };
+
+    auto maX = max_element(a.begin(), a.end(), [](auto& l, auto& r) {
+      return l.position.x < r.position.x;
+      });
+    auto maxY = max_element(a.begin(), a.end(), [](auto& l, auto& r) {
+      return l.position.y < r.position.y;
+      });
+    auto maxZ = max_element(a.begin(), a.end(), [](auto& l, auto& r) {
+      return l.position.z < r.position.z;
+      });
+
+    Point max{ maxY->position.y, maX->position.x, maxZ->position.z };
+
+
+    int minCol = min.y;
+
+    int lastCol = max.y +1;
+    //lastCol = 35;
+
+    int minLine = min.x;
+
+    int lastLine = max.x + 1;
+
+    //ofstream out;
+    //out.open(OUT_FILE, FILE_OUT_MODE);
+    system("CLS");
+    auto & out = cout;
+    //out << "------------------------------" << path << "------------" << endl;
+
+    // print top/cols count header 
+    auto topHeader = [&](int minCol, int maxCol) {
+      out << std::setfill(' ') << setw(4) << ' ';
+      for (auto col : irange(minCol, maxCol))
+      {
+        out << setw(charWidth) << col / 100;
+      }
+      out << endl;
+      out << std::setfill(' ') << setw(4) << ' ';
+      for (auto col : irange(minCol, maxCol))
+      {
+        out << setw(charWidth) << (col % 100) / 10;
+      }
+      out << endl;
+      out << std::setfill(' ') << setw(4) << ' ';
+      for (auto col : irange(minCol, maxCol))
+      {
+        out << setw(charWidth) << col % 10;
+      }
+      out << endl;
+    };
+
+    //topHeader(minCol, lastCol);
+
+    for (auto l : irange(minLine, lastLine))
+    {
+      //out << left << std::setfill(' ') << setw(4) << l;
+      for (auto c : irange(minCol, lastCol))
+      {
+        Point crPt{ l, c, 0 };
+
+        int found = -1;
+        for (auto idx : irange(0, (int)a.size()))
+        {
+          if (a[idx].position.x == l && a[idx].position.y == c)
+          {
+            found = idx;
+            break;
+          }
+        }
+
+        //out << setw(charWidth) << type[l][c];
+        /**/
+        if (found > -1)
+          out << (char)('A' + found);
+        else
+          out << ' ';        
+      }
+      out << endl;
+    }
+    Sleep(1000);
+    //out.close();
+  }
+
   string Do2()
   {
+    gravity.resize(vec.size());
 
-    return ToString(1);
+    AddToHistory(vec, 0);
+
+    Input orig = vec;
+
+    size_t step = 0;
+    do
+    {
+      ApplyGravity();
+      ApplySpeed();
+
+      step++;
+      AddToHistory(vec, step);
+    } while (reset.size() < 3);
+
+    cout << step;
+    return std::to_string(lcm(lcm(reset[0],reset[1]),reset[2]));
   }
 };
 
-TEST_CASE("Sample 1", "[x.]") {
-  cout << endl << "Tests   ------------- " << endl;
-
-  //REQUIRE(Solve("109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99").JustRun({}) == 99); // print yourself 
-
-  //REQUIRE(Solve("").Do() == "6"); // sample part 1
-  //REQUIRE(Solve("").Do2() == "30"); // sample part 2
-  REQUIRE(Solve(ReadFileToString(L"sample/sample.txt")).Do() == ReadFileToString(L"sample/result.txt"));
+TEST_CASE("Sample 0", "[.]") {
+  string s = 
+R"(<x=-1, y=0, z=2>
+<x=2, y=-10, z=-7>
+<x=4, y=-8, z=8>
+<x=3, y=5, z=-1>)";
+  REQUIRE(Solve(s).Do(10) == "179");
 }
 
-TEST_CASE("Part One", "[.]") {
+TEST_CASE("Part 2 Test", "[x.]") {
+  string s =
+    R"(<x=-1, y=0, z=2>
+<x=2, y=-10, z=-7>
+<x=4, y=-8, z=8>
+<x=3, y=5, z=-1>)";
+  REQUIRE(Solve(s).Do2() == "2772");
+  
+}
+
+TEST_CASE("Part One", "[x.]") {
   cout << endl << "Part One ------------- " << endl;
   toClipboard(Solve(ReadFileToString(L"input.txt")).Do());
   //toClipboard(Solve(ReadFileToString(L"input.txt")).Do(12, 2));
 }
 
-TEST_CASE("Part Two", "[.]") {
+TEST_CASE("Part Two", "[x.]") {
   cout << endl << "Part Two ------------- " << endl;
 
   toClipboard(Solve(ReadFileToString(L"input.txt")).Do2());
