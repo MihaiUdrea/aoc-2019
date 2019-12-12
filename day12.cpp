@@ -11,7 +11,7 @@ struct Data
 
   auto operator<=>(const Data&) const = default;
 };
-
+auto DimensionsRange = irange(0, 3);
 using Input = array<Data, 4>;
 
 struct Solve {
@@ -35,7 +35,7 @@ struct Solve {
   {
     fill(gravity.begin(), gravity.end(), Point());
     
-    for (auto i : irange(0, 3))
+    for (auto i : DimensionsRange)
     {
       if (reset.find(i) != reset.end())
         continue;
@@ -102,7 +102,7 @@ struct Solve {
 
   void AddToHistory(size_t step)
   {
-    for (auto dim : irange(0, 3))
+    for (auto dim : DimensionsRange)
     {
       if (reset.find(dim) != reset.end())
         continue;
@@ -127,22 +127,20 @@ struct Solve {
   }
 };
 
-TEST_CASE("Sample 0", "[.]") {
-  string s = 
+TEST_CASE("Sample 0", "[x.]") {
+  REQUIRE(Solve(
 R"(<x=-1, y=0, z=2>
 <x=2, y=-10, z=-7>
 <x=4, y=-8, z=8>
-<x=3, y=5, z=-1>)";
-  REQUIRE(Solve(s).Do(10) == "179");
+<x=3, y=5, z=-1>)").Do(10) == "179");
 }
 
 TEST_CASE("Part 2 Test", "[x.]") {
-  string s =
-    R"(<x=-1, y=0, z=2>
+  REQUIRE(Solve(
+R"(<x=-1, y=0, z=2>
 <x=2, y=-10, z=-7>
 <x=4, y=-8, z=8>
-<x=3, y=5, z=-1>)";
-  REQUIRE(Solve(s).Do2() == "2772");
+<x=3, y=5, z=-1>)").Do2() == "2772");
   
 }
 
