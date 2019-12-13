@@ -1,4 +1,4 @@
-using int_t = __int64;
+using int_t = int;
 
 
 struct Program {
@@ -30,7 +30,7 @@ struct Program {
 
   map<int, InstrData> map;
 
-  Program(const vector<int_t>& pr, const vector<int_t>& in) :instructions(pr), crPos(0), regA(in), base(0)
+  Program(const vector<int_t>& pr = {}, const vector<int_t>& in = {}) :instructions(pr), crPos(0), regA(in), base(0)
   {
     vector<InstrData> instrList{
       // Code Name                  ParamCount Sign      LogLead
@@ -139,7 +139,7 @@ struct Program {
   {
     Store(1, regA.front());
 
-    regA.erase(regA.begin());
+//    regA.erase(regA.begin());
 
     return true; // advance
   }
