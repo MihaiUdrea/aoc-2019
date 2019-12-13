@@ -29,9 +29,18 @@ struct Program {
   };
 
   map<int, InstrData> map;
-
-  Program(const vector<int_t>& pr = {}, const vector<int_t>& in = {}) :instructions(pr), crPos(0), regA(in), base(0)
+  bool readModeDrop = true;
+  Program(const vector<int_t>& pr = {}, const vector<int_t>& in = {}, const string& rawInst = {}, bool readModeDrop = true) 
+    :instructions(pr), crPos(0), regA(in), base(0), readModeDrop(readModeDrop)
   {
+    if (!rawInst.empty())
+    {
+      static const regex colsRxToken(",");
+      forEachRxToken(rawInst, colsRxToken, [&](string instr) {
+        instructions.push_back((int_t)atoll(instr.c_str()));
+        });
+    }
+
     vector<InstrData> instrList{
       // Code Name                  ParamCount Sign      LogLead
       { 1, bind(&Program::Add,    this),    3, "+"       , ""             }, // LogLead empty only for 3 operators use v[3]
@@ -139,9 +148,16 @@ struct Program {
   {
     Store(1, regA.front());
 
-//    regA.erase(regA.begin());
+    if (readModeDrop) 
+      regA.erase(regA.begin());
 
     return true; // advance
+  }
+
+  void SetPorts(vector<int_t> in, vector<int_t> out = {})
+  {
+    output = out;
+    regA = in;
   }
 
   bool Print()
