@@ -16,33 +16,33 @@ enum Tile
 
 const char* chars = " #._*";
 struct Solve : Program {
-  
-  Solve(const string & inStr) : Program({}, { 0 }, inStr, false) {};
+
+  Solve(const string& inStr) : Program({}, { 0 }, inStr, false) {};
 
   auto Do()
   {
-    int score = 0, blocks = 0;
+    int blocks = 0;
+    Point ballPoint, paddlePoint, lastPoint;
 
-    Point ballPoint, paddlePoint, pt;
     for (Run(3); output.size() == 3; Run(3))
     {
-      pt = Point{ output[0], output[1], output[2] };
+      lastPoint = Point{ output[0], output[1], output[2] };
 
-      blocks += (pt.z == block) ? 1 : 0;
-      
-      (pt.x == -1) ? (toConsole(Point{ 70, 10, 0 }, "Score: " + to_string(pt.z)), score = pt.z) : 0;
-      toConsole(pt, &chars[pt.z], 1, pt.z == ball ? -1 : -1);
+      blocks += (lastPoint.z == block) ? 1 : 0;
 
-      pt.z == ball ? ballPoint = pt : (pt.z == horizontal_paddle ? paddlePoint = pt : Point());
-      
+      lastPoint.x == -1 ? toConsole(Point{ 70, 10, 0 }, "Score: " + to_string(lastPoint.z))
+        : toConsole(lastPoint, &chars[lastPoint.z], 1, lastPoint.z == ball ? -1 : -1);
+
+      lastPoint.z == ball ? ballPoint = lastPoint : (lastPoint.z == horizontal_paddle ? paddlePoint = lastPoint : Point());
+
       SetPorts({ Compare(ballPoint.x, paddlePoint.x, -1, 0, 1) }, {});
     }
 
-    return make_pair(blocks, pt.z);
+    return make_pair(blocks, lastPoint.z);
   }
 
-  int Do2() { 
-    instructions[0] = 2;  
+  int Do2() {
+    instructions[0] = 2;
     return Do().second;
   }
 };
