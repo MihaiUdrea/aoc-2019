@@ -204,20 +204,38 @@ struct Point
   }
 };
 
-
 static int ManhDist(Point a)
 {
   return abs(a.x) + abs(a.y) + abs(a.z);
 }
 
-size_t gcd(size_t a, size_t b) {
-  if (b == 0)
-    return a;
-  return gcd(b, a % b);
-}
 
-size_t lcm(size_t a, size_t b) {
-  return (a * b) / gcd(a, b);
-}
+void toConsole(Point p, const char* c, int length, int sleep = -1) {
+
+  DWORD dw;
+  COORD here;
+  HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+  here.X = p.x;
+  here.Y = p.y;
+  WriteConsoleOutputCharacterA(hStdOut, c, length, here, &dw);
+
+  if (sleep > 0)
+    Sleep(sleep);
+};
+
+void toConsole(Point p, string c, int sleep = -1) {
+
+  DWORD dw;
+  COORD here;
+  HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+  here.X = p.x;
+  here.Y = p.y;
+  WriteConsoleOutputCharacterA(hStdOut, c.c_str(), c.size(), here, &dw);
+
+  if (sleep > 0)
+    Sleep(sleep);
+};
 
 #endif // UTILS_H
