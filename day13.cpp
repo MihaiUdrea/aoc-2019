@@ -7,12 +7,12 @@
 
 enum Direction
 {
-  up,
-  right,
-  down,
-  left,
+  up = 0,
+  right = 1,
+  //down,
+  left = -1//,
 
-  MAX
+  //MAX
 };
 
 enum Color
@@ -104,8 +104,8 @@ struct Solve {
     auto minY = min_element(a.begin(), a.end(), [](auto& l, auto& r) {
       return l.first.y < r.first.y;
       });
-    
-    Point min{ minY->first.y, minX->first.x, 0};
+
+    Point min{ minY->first.y, minX->first.x, 0 };
 
     auto maX = max_element(a.begin(), a.end(), [](auto& l, auto& r) {
       return l.first.x < r.first.x;
@@ -118,14 +118,14 @@ struct Solve {
     Point max{ maxY->first.y, maX->first.x, 0 };
 
 
-    int minCol = min.y;
+    int minCol = min.x;
 
-    int lastCol = max.y + 1;
+    int lastCol = max.x + 1;
     //lastCol = 35;
 
-    int minLine = min.x;
+    int minLine = min.y;
 
-    int lastLine = max.x + 1;
+    int lastLine = max.y + 1;
 
     //ofstream out;
     //out.open(OUT_FILE, FILE_OUT_MODE);
@@ -157,10 +157,10 @@ struct Solve {
 
     //topHeader(minCol, lastCol);
 
-    for (auto l : irange(minLine, lastLine+15))
+    for (auto l : irange(minLine, lastLine + 1))
     {
       //out << left << std::setfill(' ') << setw(4) << l;
-      for (auto c : irange(minCol, lastCol+15))
+      for (auto c : irange(minCol, lastCol + 1))
       {
         Point crPt{ l, c, 0 };
 
@@ -168,7 +168,7 @@ struct Solve {
         if (a.find(crPt) != a.end())
           found = a.find(crPt)->second;
 
-        
+
         //out << setw(charWidth) << type[l][c];
         /**/
         switch (found)
@@ -183,7 +183,7 @@ struct Solve {
           out << '.';
           break;
         case horizontal_paddle:
-          out << '_';
+          out << '#';
           break;
         case ball:
           out << '*';
@@ -195,66 +195,118 @@ struct Solve {
       out << endl;
     }
     //Sleep(1000);
-    system("pause");
+    //system("pause");
     //out.close();
   }
 
+  Direction getDirection(Point prev, Point crPos)
+  {
+    if (prev.y < crPos.y)
+    {
+      if (prev.x < crPos.x)
+        return Direction::right;
+      else
+        return Direction::left;
+    }
+    else
+      return Direction::up;
+  }
   int Do2(const vector<int_t>& a)
   {
     back[0] = 2;
     Program p(back, a);
+    p.regA.clear();
+    p.regA.push_back(0);
 
+    Direction ballDir = Direction::right;
     Point crPoint;
+    Point previosBallPoint;
     //Direction direction = Direction::up;
+    vector<int> intHist;
     int res = 0;
-  do{
-    do
-    {
-      p.output.clear();
-
-      p.Run(3);
-
-      if (p.output.size() == 3)
+    do {
+      do
       {
-        int x = p.output[0];
-        int y = p.output[1];
-        Tile id = (Tile)p.output[2];
 
-        points[Point({ y, x, 0 })] = id;
+        p.output.clear();
+        
+        p.Run(3);
 
-        if (Point({ y, x, 0 } == Point{-1, 0, 0  })
-        cout << "Score: " << id << endl;
-      }
-    } while (p.output.size() == 3);
+        if (p.output.size() == 3)
+        {
+          int x = p.output[0];
+          int y = p.output[1];
+          Tile id = (Tile)p.output[2];
 
-    PrintF(points);
-    
+          points[Point({ y, x, 0 })] = id;
+          /** /
+          if (Point({ y, x, 0 }) == Point{ -1, 0, 0 })
+            cout << "Score: " << id << endl;
+          if (Point({ y, x, 0 }) == Point{ 0, -1, 0 })
+            cout << "Score: " << id << endl;
+          /**/
 
-    cout << "Press Dir: a < left, d > right  w: ^stop: " << endl;
-    char dirChar;
-    cin >> dirChar;
-    Direction dir;
+          if (id == Tile::ball || id == Tile::horizontal_paddle)
+          {
+            auto paddle = find_if(points.begin(), points.end(), [](auto& el) {
+              return el.second == Tile::horizontal_paddle; });
+            if (paddle != points.end())
+            {
+              auto ballPos = find_if(points.begin(), points.end(), [](auto& el) {
+                return el.second == Tile::ball; });
 
-    switch (dirChar)
-    {
-    case 'a' :
-      dir = Direction::left;
-      break;
-    case 'd':
-      dir = Direction::right;
-      break;
-    case 'w':
-      dir = Direction::up;
-      break;
-    default:
-      break;
-    }
-    p.regA = { dir };
+              if (ballPos != points.end())
+              {
+                //PrintF(points);
 
-    res = count_if(points.begin(), points.end(), [](auto& el) {return el.second == Tile::block; });
-  }
-  while (res > 0);
-  return points[{-1, 0, 0  }];
+                Point ballPoint = ballPos->first;
+
+                ballDir = getDirection(previosBallPoint, ballPoint);
+                previosBallPoint = ballPoint;
+
+                Point paddlePoint = paddle->first;
+                int steps = paddlePoint.y - ballPoint.y - 1;
+                p.regA[0] = 0;
+
+                //for(auto i : irange(0, steps))
+                if (ballDir == Direction::left)
+                {
+                  Point landing = ballPoint + Point({ steps, -steps, 0 });
+
+                  if (landing.x < paddlePoint.x)
+                    p.regA[0] = Direction::left;
+                  else if (landing.x > paddlePoint.x)
+                    p.regA[0] = (Direction::right);
+                }
+                else if (ballDir == Direction::right)
+                {
+                  Point landing = ballPoint + Point({ steps, +steps, 0 });
+
+                  if (landing.x < paddlePoint.x)
+                    p.regA[0] = Direction::left;
+                  else if (landing.x > paddle->first.x)
+                    p.regA[0] = (Direction::right);
+                }
+                else
+                {
+                  // up - chase
+                  if (ballPoint.x < paddlePoint.x)
+                    p.regA[0] = Direction::left;
+                  else if (ballPoint.x > paddlePoint.x)
+                    p.regA[0] = (Direction::right);    
+                }           
+
+                intHist.push_back(p.regA[0]);
+              }
+            }
+          }
+        }     
+      } while (p.output.size() == 3);
+
+      res = count_if(points.begin(), points.end(), [](auto& el) {return el.second == Tile::block; });
+
+    } while (res > 0);
+    return points[{0, -1, 0  }];
   }
 };
 
@@ -268,11 +320,11 @@ TEST_CASE("Sample 1", "[.]") {
   //REQUIRE(Solve(ReadFileToString(L"input.txt")).Do({ 2 }) == 69781); // sample test
 }
 
-TEST_CASE("New1", "[x.]") {
+TEST_CASE("New1", "[.]") {
   toClipboard((int)Solve(ReadFileToString(L"input.txt")).Do({ 0 }));
 }
 
-TEST_CASE("New2", "[.]") {
+TEST_CASE("New2", "[x.]") {
   //Solve(ReadFileToString(L"input.txt")).Do2({ 1 });
   toClipboard((int)Solve(ReadFileToString(L"input.txt")).Do2({ 0 }));
 
