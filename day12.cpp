@@ -34,7 +34,7 @@ struct Solve {
   void ApplyGravity()
   {
     fill(gravity.begin(), gravity.end(), Point());
-    
+
     for (auto i : DimensionsRange)
     {
       if (reset.find(i) != reset.end())
@@ -70,7 +70,7 @@ struct Solve {
 
     // inc speed    
     for (auto it = vec.begin(); it != vec.end(); ++it)
-      it->speed = it->speed + gravity[it-vec.begin()];
+      it->speed = it->speed + gravity[it - vec.begin()];
   }
 
   int GetEnergy()
@@ -123,13 +123,13 @@ struct Solve {
       ApplySpeed();
     }
 
-    return std::to_string(lcm(lcm(reset[0],reset[1]),reset[2]));
+    return std::to_string(lcm(lcm(reset[0], reset[1]), reset[2]));
   }
 };
 
-TEST_CASE("Sample 0", "[x.]") {
+TEST_CASE("Sample 0", "[x]") {
   REQUIRE(Solve(
-R"(<x=-1, y=0, z=2>
+    R"(<x=-1, y=0, z=2>
 <x=2, y=-10, z=-7>
 <x=4, y=-8, z=8>
 <x=3, y=5, z=-1>)").Do(10) == "179");
@@ -137,11 +137,11 @@ R"(<x=-1, y=0, z=2>
 
 TEST_CASE("Part 2 Test", "[x.]") {
   REQUIRE(Solve(
-R"(<x=-1, y=0, z=2>
+    R"(<x=-1, y=0, z=2>
 <x=2, y=-10, z=-7>
 <x=4, y=-8, z=8>
 <x=3, y=5, z=-1>)").Do2() == "2772");
-  
+
 }
 
 TEST_CASE("Part One", "[x.]") {
