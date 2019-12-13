@@ -15,38 +15,41 @@ enum Tile
 };
 
 const char* chars = " #._*";
-struct Solve {
-  Program p = Program({}, {0});
+struct Solve : Program {
+  
+  Solve(const string & inStr) : Program({}, { 0 }, inStr, false) {};
 
-  Solve(string inStr)
+  auto Do()
   {
-    static const regex colsRxToken(",");
-    forEachRxToken(inStr, colsRxToken, [&](string instr) {
-      p.instructions.push_back(atoll(instr.c_str()));
-      });
-  };
+    int score = 0, blocks = 0;
 
-  int Do2(const vector<int_t>& a)
-  {
-    int score;
-    p.instructions[0] = 2;
-    Point ballPoint, paddlePoint;
-    for (p.Run(3); p.output.size() == 3; p.Run(3))
+    Point ballPoint, paddlePoint, pt;
+    for (Run(3); output.size() == 3; Run(3))
     {
-      Tile id = (Tile)p.output[2];
-      Point pt{ p.output[1], p.output[0], 0 };
-      (pt == Point{ 0, -1, 0 })?(toConsole(Point{ 10, 70,0 }, "Score: " + to_string(id)), score = id):0, toConsole(pt, &chars[id], 1, id == ball ? -1 : -1);
-      id == ball ? ballPoint = pt : (id == horizontal_paddle ? paddlePoint = pt : Point());
-      p.output.clear(), p.regA[0] = Compare(ballPoint.x, paddlePoint.x, -1, 0, 1);
+      pt = Point{ output[0], output[1], output[2] };
+
+      blocks += (pt.z == block) ? 1 : 0;
+      
+      (pt.x == -1) ? (toConsole(Point{ 70, 10, 0 }, "Score: " + to_string(pt.z)), score = pt.z) : 0;
+      toConsole(pt, &chars[pt.z], 1, pt.z == ball ? -1 : -1);
+
+      pt.z == ball ? ballPoint = pt : (pt.z == horizontal_paddle ? paddlePoint = pt : Point());
+      
+      SetPorts({ Compare(ballPoint.x, paddlePoint.x, -1, 0, 1) }, {});
     }
-    return score;
+
+    return make_pair(blocks, pt.z);
+  }
+
+  int Do2() { 
+    instructions[0] = 2;  
+    return Do().second;
   }
 };
 
 TEST_CASE("New2", "[x.]") {
-  //Solve(ReadFileToString(L"input.txt")).Do2({ 1 });
-  toClipboard((int)Solve(ReadFileToString(L"input.txt")).Do2({ 0 }));
-
+  toConsole(Point{ 70, 5, 0 }, "Part 1: " + to_string(Solve(ReadFileToString(L"input.txt")).Do().first));
+  toClipboard((int)Solve(ReadFileToString(L"input.txt")).Do2());
 }
 
 /* Input ---------------
