@@ -4,18 +4,112 @@
 #include "catch.hpp"
 #include "Utils.h"
 #include "Program.h"
-
-struct PointData
-{
-  Point point;
-  int dist = 0;
-};
+#include <conio.h>
 
 struct DirSteps {
   char dir;
   int steps;
 };
 
+
+
+enum Dir
+{
+  left,
+  right,
+  up,
+  down
+};
+
+auto chars = "LR";
+
+//using Funtion = vector<Dir>;
+using Funtion = vector<pair<Dir, int>>;
+
+struct PointData
+{
+  Point pt;
+  Dir dir;
+
+  vector<Dir> path;
+  set<Point> hist;
+  int groups = 0;
+
+
+  string Print()
+  {
+    stringstream s;
+    auto [mainProg, functions] = ComputeGroupsCount();
+    s << "Main: ";
+    for (auto i : mainProg)
+    {
+      s << "Funtion " << 'A' + i << ',';
+    }
+    for (auto i : irange(0, functions.size()))
+    {
+      auto f = functions[i];
+      s << "\n" << 'A' + i << ": ";
+      for (auto inst : f)
+      {
+        assert(inst.first < Dir::up);
+        s << chars[inst.first] << "," << inst.second << ",";
+      }
+    }
+    return s.str();
+  }
+
+  int GetMaxMem()
+  {
+    auto [mainProg, functions] = ComputeGroupsCount();
+    int maxmem = 0;
+
+    // main size 
+    int mainSize = mainProg.size() * 1 - 1;
+
+    maxmem = mainSize;
+    for (auto f : functions)
+    {
+      int fSize = f.size() * 2 - 1;
+      maxmem = max(maxmem, fSize);
+    }
+    return maxmem;
+  }
+
+  pair<vector<int>, vector<Funtion>> ComputeGroupsCount() 
+  {
+    // split in basic instr
+    pair<vector<int>, vector<Funtion>> res{};
+
+    vector<pair<Dir, int>> rawFunctions;
+    int crStep = 1;
+    for (auto idx : irange(1, path.size()))
+    {
+      if (path[idx] == path[idx - 1])
+      {
+        crStep++;
+      }
+      else
+      {
+        rawFunctions.emplace_back(path[idx - 1], crStep);
+        crStep = 1;
+      }
+    }
+    // try 
+
+    return res;
+  }
+};
+
+using Que = priority_queue<PointData>;
+bool operator <(const PointData& _Left, const PointData& _Right)
+{
+
+  /*if (_Left.dist == _Right.dist)
+    return _Left.point.second < _Right.point.second;
+  else
+  */
+  return _Left.groups > _Right.groups;
+}
 
 struct Data
 {
@@ -25,13 +119,14 @@ struct Data
 };
 
 array<Point, 4> delta = { Point{-1,0,0},{1,0,0},{0,-1,0},{0,1,0} };
-struct Solve : Program{
-  
-  Solve(const string& inStr) : Program({}, { 0 }, inStr, false) {};
+struct Solve : Program {
+
+  Solve(const string& inStr) : Program({}, { 0 }, inStr, true) {};
 
   Point start;
   set<Point> points;
   set<Point> intersections;
+  map<Point, set<pair<Point, Dir>>> next;
   int_t JustRun(vector<int_t> a)
   {
     Run();
@@ -54,22 +149,26 @@ struct Solve : Program{
       }
       else
         col++;
-      
+
     }
 
+    points.insert(start);
 
     for (auto p : points)
     {
       bool missing = false;
-      for (auto d : delta)
+      for (auto di : irange(0, delta.size()))
       {
+        auto d = delta[di];
         Point newi = p + d;
         if (points.find(newi) == points.end())
           missing = true;
+        else
+          next[p].insert({ newi, (Dir)di });
       }
 
       if (!missing)
-          intersections.insert(p);
+        intersections.insert(p);
     }
 
     int sum = 0;
@@ -82,18 +181,140 @@ struct Solve : Program{
 
   string Do()
   {
-
     return ToString(1);
+  }
+
+  Dir startDir = Dir::up;
+
+  vector<vector<Dir>> solutions;
+
+  void Parse(vector<Dir> &path, Point pt, Dir dir, set<Point> & history)
+  {
+    history.insert(pt);
+
+    path.push_back(dir);
+
+    for (auto e : next[pt])
+    {
+      Parse(path, e.first, e.second, history);      
+    }
+
+    path.pop_back();
+  }
+
+  Que que;
+
+  void Explore(Que::value_type & crEl)
+  {
+    for (auto e : next[crEl.pt])
+    {
+      PointData newState = { e.first, e.second, crEl.path, crEl.hist };
+      newState.hist.insert(e.first);
+      newState.path.push_back(e.second);
+
+      newState.ComputeGroupsCount();
+
+      que.push(newState);
+    }
   }
 
   string Do2()
   {
 
-    return ToString(1);
+    //JustRun({});
+
+    PointData startState{ start, Dir::up, {}, {start}, 0 };
+    
+    //que.push(startState);
+
+    /**/
+    PointData last;
+    Point oxygen;
+    while (!que.empty())
+    {
+      auto crEl = que.top();
+      que.pop();
+
+      if (crEl.hist.size() == points.size())
+      {
+        last = crEl;
+
+        cout << "P2: " << crEl.Print();
+        break;
+      }
+
+      Explore(crEl);
+
+      if (que.empty())
+      {
+        last = crEl;
+        cout << "INCOMPLETE" << endl;
+        cout << crEl.Print();
+      }
+    }
+
+    pair<vector<int>, vector<Funtion>> res{ {0,1,1,0,1,2,0,2,1,3}, {
+      {
+        {Dir::left, 4},
+        {Dir::left, 6},
+        {Dir::left, 8},
+        {Dir::left, 12}
+      },
+      {
+        {Dir::left, 8},
+        {Dir::right, 12},
+        {Dir::left, 12}
+      },
+      {
+        {Dir::right, 12},
+        {Dir::left, 6},
+        {Dir::left, 6},
+        {Dir::left, 8}
+      },
+      {
+        {Dir::right, 12},
+        {Dir::left, 6},
+        {Dir::left, 8}
+      }
+    } };
+    
+    
+    string s = 
+      R"(A,B,B,A,B,C,A,C,B,C
+L,4,L,6,L,8,L,12
+L,8,R,12,L,12
+R,12,L,6,L,6,L,8
+n
+)";
+    s;
+
+    instructions[0] = 2;
+
+    vector<int> in;
+    copy(s.begin(), s.end(), back_inserter(in));
+
+    crPos = 0;
+    SetPorts({ /*in*/ }, {});
+    
+    auto read = []() {
+      char c;
+      cin >> std::noskipws >> c;
+      return c;
+    };
+
+    while (Run(read, 0, '\n') == outputReady)
+    {
+      copy(output.begin(), output.end(),
+        ostream_iterator<char>(cout));
+      
+      output.clear();
+    }
+
+    return ToString(output.back());
   }
 };
 
-TEST_CASE("Sample 1", "[x.]") {
+TEST_CASE("Sample 1", "[.]") {
   cout << endl << "Tests   ------------- " << endl;
 
   //REQUIRE(Solve("109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99").JustRun({}) == 99); // print yourself 
@@ -109,8 +330,8 @@ TEST_CASE("Part One", "[.]") {
   //toClipboard(Solve(ReadFileToString(L"input.txt")).Do(12, 2));
 }
 
-TEST_CASE("Part Two", "[.]") {
-  cout << endl << "Part Two ------------- " << endl;
+TEST_CASE("Part Two", "[x.]") {
+ // cout << endl << "Part Two ------------- " << endl;
 
   toClipboard(Solve(ReadFileToString(L"input.txt")).Do2());
 }
