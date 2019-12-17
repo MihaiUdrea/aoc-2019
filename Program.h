@@ -28,9 +28,9 @@ struct Program {
     InstrData(int o, std::function<bool()> e, int p, string s, string l) :opCode(o), exec(e), paramCount(p), name(s), lead(l) {}
   };
 
-  map<int, InstrData> map;
+  map<int, InstrData> myMap;
   bool readModeDrop = true;
-  Program(const vector<int_t>& pr = {}, const vector<int_t>& in = {}, const string& rawInst = {}, bool readModeDrop = true) 
+  Program(const vector<int_t>& pr = {}, const vector<int_t>& in = {}, const string& rawInst = {}, bool readModeDrop = true)
     :instructions(pr), crPos(0), regA(in), base(0), readModeDrop(readModeDrop)
   {
     if (!rawInst.empty())
@@ -55,7 +55,7 @@ struct Program {
     };
 
     for (auto i : instrList)
-      map.insert({ i.opCode,  i });
+      myMap.insert({ i.opCode,  i });
   }
 
   static size_t GetDigit(size_t v, size_t idx)
@@ -148,7 +148,7 @@ struct Program {
   {
     Store(1, regA.front());
 
-    if (readModeDrop) 
+    if (readModeDrop)
       regA.erase(regA.begin());
 
     return true; // advance
@@ -270,18 +270,32 @@ struct Program {
     return 0;
   }
 
-  void Run(int outputSizeBreak = 0)
+  enum RunResult
+  {
+    outputReady,
+    finish
+  };
+
+  static int GetInput()
+  {
+    cout << "NO INPUT" <<endl;
+    exit(1);
+  }
+
+  RunResult Run(std::function<int()> inputFct = GetInput, int outputSizeBreak = 0, char outChar = 0)
   {
     bool log = false;
     while (instructions[crPos] != 99)
     {
-
       auto inst = (size_t)instructions[crPos] % 100;
-      const auto& instData = map.find(inst)->second;
+      const auto& instData = myMap.find(inst)->second;
 
       log ? Log(instData) : 1;
 
       logDataStream.str("");
+
+      if (instData.opCode == 3 && regA.empty())
+        regA.push_back(inputFct());
 
       bool adv = instData.exec();
       if (adv)
@@ -290,7 +304,10 @@ struct Program {
       log ? (cout << logDataStream.str()) : cout;
 
       if (outputSizeBreak > 0 && output.size() == outputSizeBreak)
-        break;
+        return outputReady;
+      if (outChar && output.size() > 0 && output.back() == outChar)
+        return outputReady;
     }
+    return finish;
   }
 };
