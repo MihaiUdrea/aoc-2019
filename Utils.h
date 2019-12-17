@@ -108,7 +108,7 @@ Ret Compare(OpT aL, OpT aR, Ret LtResult, Ret EqResult, Ret GtResult)
 
 const regex lineRxToken("\\n");
 
-void forEachRxToken(string& inStr, const regex& sepRx, std::function<void(string)> fct)
+void forEachRxToken(const string& inStr, const regex& sepRx, std::function<void(string)> fct)
 {
   for (sregex_token_iterator iter(inStr.begin(), inStr.end(), sepRx, -1), end; iter != end; ++iter)
   {
@@ -116,12 +116,12 @@ void forEachRxToken(string& inStr, const regex& sepRx, std::function<void(string
   }
 }
 
-void forEachLine(string& inStr, std::function<void(string)> fct)
+void forEachLine(const string& inStr, std::function<void(string)> fct)
 {
   forEachRxToken(inStr, lineRxToken, fct);
 }
 
-vector<string> Tokenize(string& inStr, const regex& sepRx)
+vector<string> Tokenize(const string& inStr, const regex& sepRx)
 {
   vector<string> list;
   forEachLine(inStr, [&](string line) {list.push_back(line); });
