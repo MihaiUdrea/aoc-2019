@@ -52,7 +52,7 @@ bool operator <(const KeyPointData& _Left, const KeyPointData& _Right)
 
 struct KeyPointData2
 {
-  array<char,4> key;
+  array<char, 4> key;
   int dist = 0;
   set<char> prevKeys;
 };
@@ -92,7 +92,7 @@ bool operator <(const PointData& _Left, const PointData& _Right)
         return _Left.keys < _Left.keys;
       else
         return _Left.doors.size() < _Left.doors.size();
-    else 
+    else
       return _Left.keys.size() < _Left.keys.size();
   }
   else
@@ -116,7 +116,7 @@ bool operator <(const PointData& _Left, const PointData& _Right)
 
 array<Point, 4> delta = { Point{-1,0,0},{1,0,0},{0,-1,0},{0,1,0} };
 
-array<Point, 4> start;
+array<Point, 4> start = { Point{-10,0,0},{-20,0,0},{-30,-1,0},{-40,1,0} };
 
 array<char, 4> bots = { '@', '$', '%', '*' };
 
@@ -143,23 +143,17 @@ struct Solve {
     lines = vec.size();
 
     // find start
-
+    int startCount = 0;
     for (auto l : irange(0, vec.size()))
     {
       string& line = vec[l];
       for (auto c : irange(0, line.size()))
       {
         auto ch = line[c];
-        int whereS = -1;
-        for (auto idx : irange(0, bots.size()))
+        
+        if (ch == '@')
         {
-          if (bots[idx] == ch)
-            whereS = idx;
-        }
-
-        if (whereS != -1)
-        {
-          start[whereS] = { c, l };
+          start[startCount++] = { c, l };
           hall.insert({ c, l });
         }
         else if (ch >= 'A' && ch <= 'Z')
@@ -203,7 +197,7 @@ struct Solve {
   map<char, vector<char> > lockings;
 
   set<Point> historySet;
-  void Parse(vector<char> & prevDoors, set<char> & doorsSet, Point pt)
+  void Parse(vector<char>& prevDoors, set<char>& doorsSet, Point pt)
   {
 
 
@@ -234,6 +228,7 @@ struct Solve {
   {
     for (auto sP : start)
     {
+      //auto sP = start[0];
       vector<char> c;
       set<char> s;
 
@@ -265,13 +260,13 @@ struct Solve {
 
 
   map<char, set<MyStruct>> distFromOneKey;
-  
+
   void DistancesBetweenKeys()
   {
-    for(auto pSIdx : irange(0,start.size()))
+    for (auto pSIdx : irange(0, start.size()))
       keys[start[pSIdx]] = bots[pSIdx];
 
-    for(auto l : keys)
+    for (auto l : keys)
     {
       QueDist que;
 
@@ -291,7 +286,7 @@ struct Solve {
           {
             distBetKeys[{where->second, l.second}] = crEl.dist;
             auto& x = distFromOneKey[l.second];
-            MyStruct b { where->second, crEl.dist };
+            MyStruct b{ where->second, crEl.dist };
             x.insert(b);
             int p = 0;
             p++;
@@ -316,7 +311,7 @@ struct Solve {
     set<pair<char, set<char>>> history;
     QueKey que;
     que.push({ '@', 0 });
-    
+
     KeyPointData best;
 
     while (!que.empty())
@@ -324,7 +319,7 @@ struct Solve {
       auto crEl = que.top();
 
       que.pop();
-      
+
       if (history.insert({ crEl.key, crEl.prevKeys }).second == false)
         continue; // seen
 
@@ -345,7 +340,7 @@ struct Solve {
         if (crEl.prevKeys.find(n.first) != crEl.prevKeys.end())
           continue; // already been to this key
 
-        KeyPointData newDataPoint{ n.first, crEl.dist + n.second, crEl.prevKeys};
+        KeyPointData newDataPoint{ n.first, crEl.dist + n.second, crEl.prevKeys };
 
         // verify all keys are present
         bool bad = false;
@@ -359,7 +354,7 @@ struct Solve {
         }
         if (bad)
           continue;
-        
+
         que.push(newDataPoint);
       }
     }
@@ -368,7 +363,7 @@ struct Solve {
 
   int BFS2()
   {
-    set<pair<array<char,4>, set<char>>> history;
+    set<pair<array<char, 4>, set<char>>> history;
     QueKey2 que;
     que.push({ bots, 0 });
 
@@ -383,7 +378,7 @@ struct Solve {
       if (history.insert({ crEl.key, crEl.prevKeys }).second == false)
         continue; // seen
 
-      for(auto x : crEl.key)
+      for (auto x : crEl.key)
         crEl.prevKeys.insert(x);
 
       if (crEl.prevKeys.size() == keys.size())
@@ -392,7 +387,7 @@ struct Solve {
       if (crEl.prevKeys.size() > best.prevKeys.size())
         best = crEl;
 
-      for (auto xi : irange(0,crEl.key.size()))
+      for (auto xi : irange(0, crEl.key.size()))
       {
         auto x = crEl.key[xi];
 
@@ -437,7 +432,7 @@ struct Solve {
     //auto res = BFS();
     auto res = BFS2();
     toClipboard(res);
-    return to_string(res); 
+    return to_string(res);
   }
 };
 
@@ -465,7 +460,7 @@ TEST_CASE("Sample 1", "[.]") {
 
 }
 
-TEST_CASE("Sample 2", "[x.]") {
+TEST_CASE("Sample 2", "[.]") {
   cout << endl << "Tests   ------------- " << endl;
 
   CHECK(Solve(R"(
@@ -509,7 +504,7 @@ TEST_CASE("Sample 2", "[x.]") {
 #o#m..#i#jk.#
 #############
 )").Do() == "72");
-  
+
 }
 
 TEST_CASE("Part One", "[x.]") {
