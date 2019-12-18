@@ -7,11 +7,7 @@
 
 // Aoc.cpp : This file contains the 'main' function. Program execution begins and ends there.
 // Priority que
-//   .......
-//   ....X..
-//   #...X.@
-//   ....X..
-//   .......
+// --- Day 18: Many-Worlds Interpretation ---
 
 struct MyStruct
 {
