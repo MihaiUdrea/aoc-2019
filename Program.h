@@ -282,6 +282,26 @@ struct Program {
     exit(1);
   }
 
+  RunResult RunFromStartRestoreWithInput(vector<int> in)
+  {
+    regA = std::move(in);
+
+    crPos = 0;
+    auto back = instructions;
+    auto res = Run();
+    instructions = std::move(back);
+    return res;
+  }
+
+  RunResult RunFromStartRestore()
+  {
+    crPos = 0;
+    auto back = instructions;
+    auto res = Run();
+    instructions = std::move(back);
+    return res;
+  }
+
   RunResult Run(std::function<int()> inputFct = GetInput, int outputSizeBreak = 0, char outChar = 0)
   {
     bool log = false;
