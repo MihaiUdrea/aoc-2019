@@ -4,229 +4,21 @@
 #include "catch.hpp"
 #include "Utils.h"
 #include "Program.h"
-#include <conio.h>
 
-struct DirSteps {
-  char dir;
-  int steps;
-};
-
-
-
-enum Dir
-{
-  left,
-  right,
-  up,
-  down
-};
-
-auto chars = "LR";
-
-//using Funtion = vector<Dir>;
-using Funtion = vector<pair<Dir, int>>;
-
-struct PointData
-{
-  Point pt;
-  Dir dir;
-
-  vector<Dir> path;
-  set<Point> hist;
-  int groups = 0;
-
-
-  string Print()
-  {
-    stringstream s;
-    auto [mainProg, functions] = ComputeGroupsCount();
-    s << "Main: ";
-    for (auto i : mainProg)
-    {
-      s << "Funtion " << 'A' + i << ',';
-    }
-    for (auto i : irange(0, functions.size()))
-    {
-      auto f = functions[i];
-      s << "\n" << 'A' + i << ": ";
-      for (auto inst : f)
-      {
-        assert(inst.first < Dir::up);
-        s << chars[inst.first] << "," << inst.second << ",";
-      }
-    }
-    return s.str();
-  }
-
-  int GetMaxMem()
-  {
-    auto [mainProg, functions] = ComputeGroupsCount();
-    int maxmem = 0;
-
-    // main size 
-    int mainSize = mainProg.size() * 1 - 1;
-
-    maxmem = mainSize;
-    for (auto f : functions)
-    {
-      int fSize = f.size() * 2 - 1;
-      maxmem = max(maxmem, fSize);
-    }
-    return maxmem;
-  }
-
-  pair<vector<int>, vector<Funtion>> ComputeGroupsCount()
-  {
-    // split in basic instr
-    pair<vector<int>, vector<Funtion>> res{};
-
-    vector<pair<Dir, int>> rawFunctions;
-    int crStep = 1;
-    for (auto idx : irange(1, path.size()))
-    {
-      if (path[idx] == path[idx - 1])
-      {
-        crStep++;
-      }
-      else
-      {
-        rawFunctions.emplace_back(path[idx - 1], crStep);
-        crStep = 1;
-      }
-    }
-    // try 
-
-    return res;
-  }
-};
-
-using Que = priority_queue<PointData>;
-bool operator <(const PointData& _Left, const PointData& _Right)
-{
-
-  /*if (_Left.dist == _Right.dist)
-    return _Left.point.second < _Right.point.second;
-  else
-  */
-  return _Left.groups > _Right.groups;
-}
-
-struct Data
-{
-  set<Point> points;
-  map<Point, int> dists;
-  vector<DirSteps> inputDirSteps;
-};
-
-array<Point, 4> delta = { Point{-1,0,0},{1,0,0},{0,-1,0},{0,1,0} };
 struct Solve : Program {
 
   Solve(const string& inStr) : Program({}, { 0 }, inStr, true), progInst(inStr) {};
   string progInst;
-  Point start;
-  set<Point> points;
-  set<Point> intersections;
-  map<Point, set<pair<Point, Dir>>> next;
-  int_t JustRun(vector<int_t> a)
-  {
-    Run();
-
-    int line = 0;
-    int col = 0;
-    for (auto el : output)
-    {
-      cout << (char)el;
-
-      if ((char)el == '#')
-        points.insert({ col, line, 0 });
-      else if ((char)el == '^')
-        start = { col, line, 0 };
-
-      if (el == 10)
-      {
-        line++;
-        col = 0;
-      }
-      else
-        col++;
-
-    }
-
-    points.insert(start);
-
-    for (auto p : points)
-    {
-      bool missing = false;
-      for (auto di : irange(0, delta.size()))
-      {
-        auto d = delta[di];
-        Point newi = p + d;
-        if (points.find(newi) == points.end())
-          missing = true;
-        else
-          next[p].insert({ newi, (Dir)di });
-      }
-
-      if (!missing)
-        intersections.insert(p);
-    }
-
-    int sum = 0;
-    for (auto i : intersections)
-      sum += i.x * i.y;
-
-    toClipboard(sum);
-    return sum;
-  }
-
-  string Do()
-  {
-    return ToString(1);
-  }
-
-  Dir startDir = Dir::up;
-
-  vector<vector<Dir>> solutions;
-
-  void Parse(vector<Dir>& path, Point pt, Dir dir, set<Point>& history)
-  {
-    history.insert(pt);
-
-    path.push_back(dir);
-
-    for (auto e : next[pt])
-    {
-      Parse(path, e.first, e.second, history);
-    }
-
-    path.pop_back();
-  }
-
-  Que que;
-
-  void Explore(Que::value_type& crEl)
-  {
-    for (auto e : next[crEl.pt])
-    {
-      PointData newState = { e.first, e.second, crEl.path, crEl.hist };
-      newState.hist.insert(e.first);
-      newState.path.push_back(e.second);
-
-      newState.ComputeGroupsCount();
-
-      que.push(newState);
-    }
-  }
-
+  
   Point GetRightDown(Point p)
   {
     int y = p.y;
-    for (;;y++)
+    for (;; y++)
     {
       Program pr({}, { p.x, y }, progInst, true);
       pr.Run();
       if (pr.output.back() == 0)
-        break;      
+        break;
     }
 
     int x = p.x;
@@ -240,91 +32,72 @@ struct Solve : Program {
     }
     return { x,y };
   }
-  string Do2()
+
+  string Part2()
   {
-    SetPorts({ /*in*/ }, {});
-    
-    int x = 0;
-    int y = 0;
-    set<Point> beam;
-    Point pt{ 835, 940 };
-    if (1)
-    do {
-      auto res = GetRightDown(pt);
-      auto dif = res - pt;
-
-      cout << pt.x << "," << pt.y << "->" << dif.x << "," << dif.y << endl;
-
-      auto dx = 100 - dif.x;
-      auto dy = 100 - dif.y;
-      pt = pt + Point{ dx, dy };
-      if (dx == dy && dx == 100)
-        break;
-    } while (true);
-
-    for (auto y : irange(1000, 1200))
-    {
-      for (auto x : irange(950, 1100))
+    auto print = [&](int lm, int lM, int cm, int cM) {
+      cout << lm << ", " << lM << ", " << cm << ", " << cM << endl;
+      for (auto y : irange(lm, lM))
       {
-        Program p({}, { x, y }, progInst, true);
-        //regA.push_back(x);
-        //regA.push_back(y);
-        p.Run();
-
-        if (p.output.back() == 1)
+        for (auto x : irange(cm, cM))
         {
-          beam.insert({ x,y });
-          cout << '#';
+          SetPorts({ x, y });
+          RunFromStartRestore();
+
+          if (output.back() == 1)
+          {
+            cout << '#';
+          }
+          else
+            cout << '.';
+
         }
-        else
-          cout << '.';
-        
+        cout << endl;
       }
-      cout << endl;
-    }
-
-    /** /
-    auto read = []() {
-      char c;
-      cin >> std::noskipws >> c;
-
-      
-      return c;
     };
 
-    while (Run(read, 50) == outputReady)
-    {
-      copy(output.begin(), output.end(),
-        ostream_iterator<char>(cout));
-      cout << endl;
+    auto InsideBeam = [&](Point pt) {
+      if (pt.x <= 0 || pt.y <= 0)
+        return false;
 
-      output.clear();
+      SetPorts({ pt.x, pt.y });
+      RunFromStartRestore();
+
+      return output.back() == 1;
+    };
+
+    auto FindFirstOnLine = [&](int l, int startCol) {
+      Point pt{ startCol, l };
+      for (;; pt.x++)
+      {
+        if (InsideBeam(pt))
+          break;
+      }
+      return pt;
+    };
+
+    auto pt = FindFirstOnLine(100, 0);
+    for (;; pt.y++)
+    {
+      for (;; pt.x++)
+      {
+        if (InsideBeam(pt))
+          break;
+      }
+
+      // try this line
+      if (InsideBeam(pt + Point{ 99, -99 }))
+      {
+        return to_string(pt.x * 10000 + pt.y - 99);
+      }
     }
-    /**/
-    return ToString(-1);
   }
 };
-
-TEST_CASE("Sample 1", "[.]") {
-  cout << endl << "Tests   ------------- " << endl;
-
-  //REQUIRE(Solve("109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99").JustRun({}) == 99); // print yourself 
-
-  //REQUIRE(Solve("").Do() == "6"); // sample part 1
-  //REQUIRE(Solve("").Do2() == "30"); // sample part 2
-  REQUIRE(Solve(ReadFileToString(L"input.txt")).JustRun({}) == 1);
-}
-
-TEST_CASE("Part One", "[.]") {
-  cout << endl << "Part One ------------- " << endl;
-  toClipboard(Solve(ReadFileToString(L"input.txt")).Do());
-  //toClipboard(Solve(ReadFileToString(L"input.txt")).Do(12, 2));
-}
 
 TEST_CASE("Part Two", "[x.]") {
   // cout << endl << "Part Two ------------- " << endl;
 
-  toClipboard(Solve(ReadFileToString(L"input.txt")).Do2());
+  toClipboard(Solve(ReadFileToString(L"input.txt")).Part2());
 }
 
 /* Input ---------------
