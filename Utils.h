@@ -148,7 +148,7 @@ auto match_rx(const basic_string<_Elem, _StTraits, _StAlloc>& _Str,
 }
 
 template <class _Col, class _Ty>
-inline bool contains(const _Col& _Collection, const _Ty & _Val)
+inline bool contains(const _Col& _Collection, const _Ty& _Val)
 {
   return find(_Collection.begin(), _Collection.end(), _Val) != _Collection.end();
 }
@@ -161,22 +161,22 @@ inline bool contains_pred(const _Col& _Collection, _Pr _Pred)
 
 struct Point
 {
-  int y = 0;
   int x = 0;
+  int y = 0;
   int z = 0;
 
   auto operator<=>(const Point&) const = default;
-  auto operator+(const Point& l) { return Point{ y + l.y, x + l.x, z + l.z }; };
-  auto operator-(const Point& l) { return Point{ y - l.y, x - l.x, z - l.z }; };
+  auto operator+(const Point& l) { return Point{ x + l.x, y + l.y, z + l.z }; };
+  auto operator-(const Point& l) { return Point{ x - l.x, y - l.y, z - l.z }; };
 
   int GetAxys(int ax) const
   {
     switch (ax)
     {
     case 0:
-      return y;
-    case 1:
       return x;
+    case 1:
+      return y;
     case 2:
       return z;
     default:
@@ -190,10 +190,10 @@ struct Point
     switch (ax)
     {
     case 0:
-      y += v;
+      x += v;
       break;
     case 1:
-      x += v;
+      y += v;
       break;
     case 2:
       z += v;
