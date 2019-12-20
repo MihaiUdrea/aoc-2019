@@ -277,6 +277,8 @@ string to2Ds(const _Col& _Collection, std::function<Point(const typename _Col::v
   map<Point, string> flatList;
   for_each(_Collection.begin(), _Collection.end(), [&](auto& el) {
     Point pt = toPtFct(el);
+    pt.z = 0;
+
     string str = toStringFct(el);
     flatList[pt] = str;
     });

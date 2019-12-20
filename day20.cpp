@@ -179,16 +179,35 @@ struct Solve {
       if (crEl.point == endPt && crEl.depth == 0)
       {
         res = crEl.dist;
+        //double F = 10.1;
+        //auto s = to2Ds(crEl.prev, [=](auto& l) { return Point{(int)( l.x * F / (abs(l.z) + 1)),(int)(l.y * F / (abs(l.z) + 1)) }; }, 
+        //  [](auto& l) { return string() + (char)('A' - l.z); }, to2DsFlags::full_header, ' ', 1);
 
-        auto s = to2Ds(crEl.prev, [](auto& l) { return l; }, [](auto& l) { return "*"; }, to2DsFlags::full_header, '.', 1);
-        cout << s;
+        if (1) // detail solution print
+        {
+          auto prevIt = crEl.prev.begin();
+          for (auto depthChangeIt = find_if(crEl.prev.begin(), crEl.prev.end(), [](auto& l) {return l.z == -1; });
+            prevIt != crEl.prev.end();
+            depthChangeIt = find_if(prevIt, crEl.prev.end(), [&](auto& l) {return l.z != depthChangeIt->z; }))
+          {
+            cout << "Level " << depthChangeIt->z + 1 << ": " << endl;
+            vector<Point> thisLevel(prevIt, depthChangeIt);
 
+            thisLevel.push_back(limits.first);
+            thisLevel.push_back(limits.second);
+            //copy(prevIt, depthChangeIt, back_inserter(thisLevel));
+            auto s = to2Ds(thisLevel, [=](auto& l) { return l; },
+              [&](auto& l) { return string() + (char)('A' - prevIt->z); }, to2DsFlags::full_header, ' ', 1);
+            cout << s;
+
+            prevIt = depthChangeIt;
+          }
+        }
         break;
       }
 
-
       que.pop();
-      /**/
+
       if (hist.insert({ crEl.point, crEl.depth }).second == false)
         continue; // seen
 
@@ -202,19 +221,17 @@ struct Solve {
         if (newDataPoint.depth > 0)
           continue;
 
-        /**/
-        if (n.z != 0)
-        {
-          int p = 0;
-          p++;
+        /**/ // print each level change
+        if (0)
+          if (n.z != 0)
+          {
+            cout << "Will change level : " << newDataPoint.depth << " cr level: " << endl;
 
-          //cout << "Will change level : " << newDataPoint.depth << " cr level: "<< endl;
-
-          vector<Point> thisLevel;
-          copy_if(crEl.prev.begin(), crEl.prev.end(), back_inserter(thisLevel), [&](auto e) {return e.z == crEl.depth; });
-          auto s = to2Ds(thisLevel, [](auto& l) { return l; }, [](auto& l) { return "*"; }, to2DsFlags::full_header, '.', 1);
-          // cout << s;
-        }
+            vector<Point> thisLevel;
+            copy_if(crEl.prev.begin(), crEl.prev.end(), back_inserter(thisLevel), [&](auto e) {return e.z == crEl.depth; });
+            auto s = to2Ds(thisLevel, [](auto& l) { return l; }, [](auto& l) { return "*"; }, to2DsFlags::full_header, '.', 1);
+            cout << s;
+          }
         /**/
 
         newDataPoint.prev.push_back(crEl.point);
@@ -223,19 +240,12 @@ struct Solve {
       }
     }
 
-    toClipboard(res);
     return to_string(res);
   }
 };
 
-TEST_CASE("Sample 1", "[x.]") {
-  cout << endl << "Tests   ------------- " << endl;
-
-  //REQUIRE(Solve(ReadFileToString(L"sample/sample4.txt")).Do() == ReadFileToString(L"sample/result4.txt"));
-
-  //REQUIRE(Solve(ReadFileToString(L"sample/sample3.txt")).Do() == ReadFileToString(L"sample/result3.txt"));
-
-  /**/
+TEST_CASE("P1 simple", "[.]")
+{
   REQUIRE(Solve(R"(
          A           
          A           
@@ -256,7 +266,10 @@ FG..#########.....#
   ###########.#####  
              Z       
              Z  )").Do() == "23");
-  /**/
+}
+
+TEST_CASE("P1", "[.]") {
+  cout << endl << "Tests   ------------- " << endl;
 
   REQUIRE(Solve(R"(
                    A               
@@ -297,12 +310,9 @@ YN......#               VT..#....QG
            B   J   C               
            U   P   P               
 )").Do() == "58");
-
-  //REQUIRE(Solve(ReadFileToString(L"sample/sample2.txt")).Do() == ReadFileToString(L"sample/result2.txt"));
-
 }
 
-TEST_CASE("Sample 2", "[x.]") {
+TEST_CASE("P2", "[.]") {
   cout << endl << "Tests   ------------- " << endl;
 
   REQUIRE(Solve(R"(
@@ -347,7 +357,6 @@ RE....#.#                           #......RF
 
 }
 
-// !!!!!! change hardcoded before activate
 
 TEST_CASE("Part One", "[x.]") {
   cout << endl << "Part One ------------- " << endl;
