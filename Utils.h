@@ -166,8 +166,8 @@ struct Point
   int z = 0;
 
   auto operator<=>(const Point&) const = default;
-  auto operator+(const Point& l) { return Point{ x + l.x, y + l.y, z + l.z }; };
-  auto operator-(const Point& l) { return Point{ x - l.x, y - l.y, z - l.z }; };
+  auto operator+(const Point& l) const { return Point{ x + l.x, y + l.y, z + l.z }; };
+  auto operator-(const Point& l) const { return Point{ x - l.x, y - l.y, z - l.z }; };
 
   int GetAxys(int ax) const
   {
@@ -237,5 +237,126 @@ void toConsole(Point p, string c, int sleep = -1) {
   if (sleep > 0)
     Sleep(sleep);
 };
+
+struct to2DsFlags {
+  enum DisplayMode
+  {
+    full_header,
+    no_header,
+    cols_count,
+    line_count
+  };
+};
+
+template <class _Col>
+pair<Point,Point> MinMax(const _Col& _Collection, std::function<Point(const typename _Col::value_type&)> toPtFct)
+{
+  auto & flatList = _Collection;
+  
+  auto limX = minmax_element(flatList.begin(), flatList.end(), [&](auto& l, auto& r) {
+    return toPtFct(l).x < toPtFct(r).x;
+    });
+  auto limY = minmax_element(flatList.begin(), flatList.end(), [&](auto& l, auto& r) {
+    return toPtFct(l).y < toPtFct(r).y;
+    });
+  auto limZ = minmax_element(flatList.begin(), flatList.end(), [&](auto& l, auto& r) {
+    return toPtFct(l).z < toPtFct(r).z;
+    });
+
+  Point min{ limX.first->first.x, limY.first->first.y, limZ.first->first.z };
+  Point max{ limX.second->first.x, limY.second->first.y, limZ.second->first.z };
+  return { min, max };
+}
+
+
+// auto ss = to2Ds(vals, [](auto& l) { return l.x; }, [](auto& l) { return string() + l.ch; }, to2DsFlags::full_header, '.', 1);
+template <class _Col>
+string to2Ds(const _Col& _Collection, std::function<Point(const typename _Col::value_type&)> toPtFct, std::function<string(const typename _Col::value_type&)> toStringFct,
+  to2DsFlags::DisplayMode mode = to2DsFlags::no_header, char fill = ' ', int charWidth = 1)
+{
+  map<Point, string> flatList;
+  for_each(_Collection.begin(), _Collection.end(), [&](auto& el) {
+    Point pt = toPtFct(el);
+    string str = toStringFct(el);
+    flatList[pt] = str;
+    });
+
+  auto limX = minmax_element(flatList.begin(), flatList.end(), [](auto& l, auto& r) {
+    return l.first.x < r.first.x;
+    });
+  auto limY = minmax_element(flatList.begin(), flatList.end(), [](auto& l, auto& r) {
+    return l.first.y < r.first.y;
+    });
+
+  Point min{ limX.first->first.x, limY.first->first.y };
+  Point max{ limX.second->first.x, limY.second->first.y };
+
+
+  int minCol = min.x;
+
+  int lastCol = max.x + 1;
+  //lastCol = 35;
+
+  int minLine = min.y;
+  int lastLine = max.y + 1;
+
+  stringstream out;
+
+  //ofstream out;
+  //out.open(OUT_FILE, FILE_OUT_MODE);
+  //system("CLS");
+  //auto& out = cout;
+  //out << "------------------------------" << path << "------------" << endl;
+
+  // print top/cols count header 
+  auto topHeader = [&](int minCol, int maxCol) {
+    out << std::setfill(' ') << setw(4) << ' ';
+    for (auto col : irange(minCol, maxCol))
+    {
+      if (col >= 0)
+        out << setw(charWidth) << col / 100;
+      else
+        out << setw(charWidth) << '-';
+    }
+    out << endl;
+    out << std::setfill(' ') << setw(4) << ' ';
+    for (auto col : irange(minCol, maxCol))
+    {
+      out << setw(charWidth) << (abs(col) % 100) / 10;
+    }
+    out << endl;
+    out << std::setfill(' ') << setw(4) << ' ';
+    for (auto col : irange(minCol, maxCol))
+    {
+      out << setw(charWidth) << abs(col) % 10;
+    }
+    out << endl;
+  };
+
+  if (mode == to2DsFlags::full_header || mode == to2DsFlags::cols_count)
+    topHeader(minCol, lastCol);
+
+  for (auto l : irange(minLine, lastLine))
+  {
+    if (mode == to2DsFlags::full_header || mode == to2DsFlags::line_count)
+      out << right << std::setfill(' ') << setw(4) << l;
+
+    for (auto c : irange(minCol, lastCol))
+    {
+      Point crPt{ c, l, 0 };
+
+      if (auto where = flatList.find(crPt); where != flatList.end())
+        out << setw(charWidth) << where->second;
+      else
+        out << setw(charWidth) << fill;
+    }
+    out << endl;
+  }
+  //Sleep(1000);
+  //system("pause");
+  //out.close();
+
+  return out.str();
+}
 
 #endif // UTILS_H

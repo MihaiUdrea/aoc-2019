@@ -43,6 +43,7 @@ struct Solve {
 
   Input vec;
 
+  pair<Point, Point> limits;
 
   int cols = 0;
   int lines = 0;
@@ -50,7 +51,12 @@ struct Solve {
   bool IsInner(Point p)
   {
     //return p.x > 6 && p.x < 40 && p.y > 6 && p.y < 32;
-    return p.x > 20 && p.x < 100 && p.y > 20 && p.y < 110;
+    const auto safeMargin = 5;
+    return
+      p.x > limits.first.x + safeMargin &&
+      p.x < limits.second.x - safeMargin &&
+      p.y > limits.first.y + safeMargin &&
+      p.y < limits.second.y - safeMargin;
   }
 
   Solve(string inStr) {
@@ -85,6 +91,8 @@ struct Solve {
       }
     }
 
+    limits = MinMax(portallPt, [](auto& a) {return a.first; });
+
     for (auto h : portallPt)
     {
       for (auto d : deltaReadOrder)
@@ -118,7 +126,7 @@ struct Solve {
         if (auto whre = hall.find(newPoint); whre != hall.end())
         {
           ptToDoorMap[newPoint] = h.second;
-          
+
           if (teleportPoints[h.second].first == Point{ 0,0,0 })
             teleportPoints[h.second].first = newPoint;
           else
@@ -132,7 +140,7 @@ struct Solve {
       if (p.second.second != Point{ 0,0,0 })
       {
         bool firstDown = IsInner(p.second.first);
-        nextPt[p.second.first].push_back(p.second.second + (firstDown ? Point{0,0,-1} : Point{ 0,0,+1 }));
+        nextPt[p.second.first].push_back(p.second.second + (firstDown ? Point{ 0,0,-1 } : Point{ 0,0,+1 }));
         nextPt[p.second.second].push_back(p.second.first - (firstDown ? Point{ 0,0,-1 } : Point{ 0,0,+1 }));
       }
     }
@@ -146,7 +154,7 @@ struct Solve {
         if (auto whre = hall.find(newPoint); whre != hall.end())
         {
           nextPt[p].push_back(newPoint);
-        }        
+        }
       }
     }
 
@@ -162,7 +170,7 @@ struct Solve {
     Point endPt = teleportPoints["ZZ"].first;
 
     que.push({ teleportPoints["AA"].first, 0, 0, {} });
-    set<pair<Point,int>> hist{};
+    set<pair<Point, int>> hist{};
     int res = 0;
     while (!que.empty())
     {
@@ -178,7 +186,7 @@ struct Solve {
         break;
       }
 
-      
+
       que.pop();
       /**/
       if (hist.insert({ crEl.point, crEl.depth }).second == false)
@@ -189,7 +197,7 @@ struct Solve {
         Point ptx = n;
         ptx.z = 0;
 
-        SimplePointData newDataPoint{ ptx , crEl.dist + 1, crEl.depth + goDeep ? n.z : 0, crEl.prev };
+        SimplePointData newDataPoint{ ptx , crEl.dist + 1, crEl.depth + (goDeep ? n.z : 0), crEl.prev };
 
         if (newDataPoint.depth > 0)
           continue;
@@ -205,7 +213,7 @@ struct Solve {
           vector<Point> thisLevel;
           copy_if(crEl.prev.begin(), crEl.prev.end(), back_inserter(thisLevel), [&](auto e) {return e.z == crEl.depth; });
           auto s = to2Ds(thisLevel, [](auto& l) { return l; }, [](auto& l) { return "*"; }, to2DsFlags::full_header, '.', 1);
-         // cout << s;
+          // cout << s;
         }
         /**/
 
@@ -220,13 +228,14 @@ struct Solve {
   }
 };
 
-TEST_CASE("Sample 1", "[.]") {
+TEST_CASE("Sample 1", "[x.]") {
   cout << endl << "Tests   ------------- " << endl;
 
   //REQUIRE(Solve(ReadFileToString(L"sample/sample4.txt")).Do() == ReadFileToString(L"sample/result4.txt"));
 
   //REQUIRE(Solve(ReadFileToString(L"sample/sample3.txt")).Do() == ReadFileToString(L"sample/result3.txt"));
 
+  /**/
   REQUIRE(Solve(R"(
          A           
          A           
@@ -247,9 +256,10 @@ FG..#########.....#
   ###########.#####  
              Z       
              Z  )").Do() == "23");
+  /**/
 
   REQUIRE(Solve(R"(
-A               
+                   A               
                    A               
   #################.#############  
   #.#...#...................#.#.#  
@@ -333,13 +343,13 @@ RE....#.#                           #......RF
   #############.#.#.###.###################  
                A O F   N                     
                A A D   M 
-)").Do() == "396");  
+)").Do(true) == "396");
 
 }
 
 // !!!!!! change hardcoded before activate
 
-TEST_CASE("Part One", "[x.]") { 
+TEST_CASE("Part One", "[x.]") {
   cout << endl << "Part One ------------- " << endl;
   toClipboard(Solve(ReadFileToString(L"input.txt")).Do());
   //toClipboard(Solve(ReadFileToString(L"input.txt")).Do(12, 2));
