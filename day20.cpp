@@ -7,57 +7,7 @@
 
 // Aoc.cpp : This file contains the 'main' function. Program execution begins and ends there.
 // Priority que
-// --- Day 18: Many-Worlds Interpretation ---
-
-struct MyStruct
-{
-  char first;
-  int second;
-};
-
-bool operator <(const MyStruct& _Left, const MyStruct& _Right)
-{
-  if (_Left.second == _Right.second)
-    return _Left.first < _Right.first;
-  return _Left.second < _Right.second;
-}
-
-//using Point = pair<int, int>;
-struct PointData
-{
-  //int keysMissing;
-  int dist = 0;
-  Point point;
-  string keys;
-  set<char> doors;
-  //auto operator<=>(const PointData&) const = default;
-};
-
-struct KeyPointData
-{
-  char key;
-  int dist = 0;
-  set<char> prevKeys;
-};
-bool operator <(const KeyPointData& _Left, const KeyPointData& _Right)
-{
-  if (_Left.dist == _Right.dist)
-    return _Left.key > _Right.key;
-  return _Left.dist > _Right.dist;
-}
-
-struct KeyPointData2
-{
-  array<char, 4> key;
-  int dist = 0;
-  set<char> prevKeys;
-};
-bool operator <(const KeyPointData2& _Left, const KeyPointData2& _Right)
-{
-  if (_Left.dist == _Right.dist)
-    return _Left.key > _Right.key;
-  return _Left.dist > _Right.dist;
-}
+// --- Day 20: Donut Maze ---
 
 struct SimplePointData
 {
@@ -72,62 +22,18 @@ bool operator <(const SimplePointData& _Left, const SimplePointData& _Right)
   return _Left.dist > _Right.dist;
 }
 
-using QueKey2 = priority_queue<KeyPointData2>;
-using QueKey = priority_queue<KeyPointData>;
-
 using QueDist = priority_queue<SimplePointData>;
 
-using Que = priority_queue<PointData>;
 using Input = vector<string>;
-
-/**/
-bool operator <(const PointData& _Left, const PointData& _Right)
-{
-  if (_Left.dist == _Right.dist)
-  {
-    if (_Left.keys.size() == _Right.keys.size())
-      if (_Left.doors.size() == _Left.doors.size())
-        return _Left.keys < _Left.keys;
-      else
-        return _Left.doors.size() < _Left.doors.size();
-    else
-      return _Left.keys.size() < _Left.keys.size();
-  }
-  else
-    return _Left.dist > _Right.dist;
-}
-/**/
-/** /
-bool operator <(const PointData& _Left, const PointData& _Right)
-{
-  if (_Left.keys.size() == _Right.keys.size())
-    if (_Left.dist == _Left.dist)
-    {
-      return _Left.point < _Right.point;
-    }
-    else
-      return _Left.dist < _Right.dist;
-  else
-    return _Left.keys.size() < _Left.keys.size();
-}
-/**/
 
 array<Point, 4> delta = { Point{-1,0,0},{1,0,0},{0,-1,0},{0,1,0} };
 array<Point, 2> deltaReadOrder = { Point{1,0,0},{0,1,0} };
-
-array<Point, 4> start = { Point{-10,0,0},{-20,0,0},{-30,-1,0},{-40,1,0} };
-
-array<char, 4> bots = { '@', '$', '%', '*' };
-
-
 
 
 set<Point> historySet;
 
 struct Solve {
 
-  map<Point, char> doors;
-  map<Point, char> keys;
   map<Point, char> portallPt;
   map<pair<Point, Point>, string> portalDoors;
   map<Point, string> ptToDoorMap;
@@ -135,11 +41,7 @@ struct Solve {
   set<Point> hall;
   map<Point, vector<Point>> nextPt;
 
-  set<pair<Point, string>> history;
-  map<char, vector<char> > lockings;
-
   Input vec;
-  Que que;
 
 
   int cols = 0;
@@ -172,27 +74,15 @@ struct Solve {
       {
         auto ch = line[c];
 
-        if (ch == '@')
-        {
-          start[startCount++] = { c, l };
-          hall.insert({ c, l });
-        }
-        else if (ch >= 'A' && ch <= 'Z')
+        if (ch >= 'A' && ch <= 'Z')
         {
           portallPt[{ c, l}] = ch;
-          //hall.insert({ c,l });
-        }
-        else if (ch >= 'a' && ch <= 'z')
-        {
-          keys[{ c, l}] = ch;
-          hall.insert({ c,l });
         }
         else if (ch >= '.')
         {
           hall.insert({ c,l });
         }
       }
-
     }
 
     for (auto h : portallPt)
@@ -204,9 +94,6 @@ struct Solve {
         {
           portalDoors[{ h.first, newPoint }] = string() + h.second + whre->second;
 
-          
-          //portalDoors[string() + h.second + whre->second] = { h.first, newPoint };
-          //next[h].push_back(newPoint);
         }
       }
     }
@@ -266,212 +153,10 @@ struct Solve {
   };
 
 
-
-void Dependencies()
+  string Do(bool goDeep = false)
   {
-    for (auto sP : start)
-    {
-      //auto sP = start[0];
-      vector<char> c;
-      set<char> s;
-
-      historySet.insert(sP);
-      
-      cout << "\nLockings:" << endl;
-
-      for (auto x : lockings)
-      {
-        cout << x.first << endl;
-        //for (auto y : x.second)
-        {
-          copy(x.second.begin(), x.second.end(),
-            ostream_iterator<char>(cout));
-          cout << endl;
-        }
-      }
-      // used gates
-      set<char> usedGates;
-      for (auto key : lockings)
-        for (auto y : key.second)
-          usedGates.insert(y);
-    }
-  }
-
-  map<pair<char, char>, int> distBetKeys;
-
-
-
-  map<char, set<MyStruct>> distFromOneKey;
-
-  void DistancesBetweenKeys()
-  {
-    for (auto pSIdx : irange(0, start.size()))
-      keys[start[pSIdx]] = bots[pSIdx];
-
-    for (auto l : keys)
-    {
-      QueDist que;
-
-      que.push({ l.first, 0 });
-      set<Point> hist{};
-      while (!que.empty())
-      {
-        auto crEl = que.top();
-
-        que.pop();
-        /**/
-        if (hist.insert(crEl.point).second == false)
-          continue; // seen
-
-        if (auto where = keys.find(crEl.point); where != keys.end())
-        {
-          {
-            distBetKeys[{where->second, l.second}] = crEl.dist;
-            auto& x = distFromOneKey[l.second];
-            MyStruct b{ where->second, crEl.dist };
-            x.insert(b);
-            int p = 0;
-            p++;
-          }
-        }
-
-        //for (auto d : delta)
-
-      }
-
-      //cout << "D : " << distBetKeys.size();
-    }
-  }
-
-  int BFS()
-  {
-    set<pair<char, set<char>>> history;
-    QueKey que;
-    que.push({ '@', 0 });
-
-    KeyPointData best;
-
-    while (!que.empty())
-    {
-      auto crEl = que.top();
-
-      que.pop();
-
-      if (history.insert({ crEl.key, crEl.prevKeys }).second == false)
-        continue; // seen
-
-      crEl.prevKeys.insert(crEl.key);
-
-      if (crEl.prevKeys.size() == keys.size())
-        return crEl.dist;
-
-      if (crEl.prevKeys.size() > best.prevKeys.size())
-        best = crEl;
-
-      auto& list = distFromOneKey[crEl.key];
-      for (auto n : list)
-      {
-        if (n.first == crEl.key)
-          continue; // skip self
-
-        if (crEl.prevKeys.find(n.first) != crEl.prevKeys.end())
-          continue; // already been to this key
-
-        KeyPointData newDataPoint{ n.first, crEl.dist + n.second, crEl.prevKeys };
-
-        // verify all keys are present
-        bool bad = false;
-        for (auto key : lockings[n.first])
-        {
-          if (newDataPoint.prevKeys.find(tolower(key)) == newDataPoint.prevKeys.end())
-          {
-            bad = true;
-            break;
-          }
-        }
-        if (bad)
-          continue;
-
-        que.push(newDataPoint);
-      }
-    }
-    return -1;
-  }
-
-  int BFS2()
-  {
-    set<pair<array<char, 4>, set<char>>> history;
-    QueKey2 que;
-    que.push({ bots, 0 });
-
-    KeyPointData2 best;
-
-    while (!que.empty())
-    {
-      auto crEl = que.top();
-
-      que.pop();
-
-      if (history.insert({ crEl.key, crEl.prevKeys }).second == false)
-        continue; // seen
-
-      for (auto x : crEl.key)
-        crEl.prevKeys.insert(x);
-
-      if (crEl.prevKeys.size() == keys.size())
-        return crEl.dist;
-
-      if (crEl.prevKeys.size() > best.prevKeys.size())
-        best = crEl;
-
-      for (auto xi : irange(0, crEl.key.size()))
-      {
-        auto x = crEl.key[xi];
-
-        auto& list = distFromOneKey[x];
-        for (auto n : list)
-        {
-          if (n.first == x)
-            continue; // skip self
-
-          if (crEl.prevKeys.find(n.first) != crEl.prevKeys.end())
-            continue; // already been to this key
-
-          KeyPointData2 newDataPoint{ crEl.key, crEl.dist + n.second, crEl.prevKeys };
-          newDataPoint.key[xi] = n.first;
-
-          // verify all keys are present
-          bool bad = false;
-          for (auto key : lockings[n.first])
-          {
-            if (newDataPoint.prevKeys.find(tolower(key)) == newDataPoint.prevKeys.end())
-            {
-              bad = true;
-              break;
-            }
-          }
-          if (bad)
-            continue;
-
-          que.push(newDataPoint);
-        }
-      }
-    }
-    return -1;
-  }
-
-  string Do()
-  {
-    //Dependencies();
-
-    //DistancesBetweenKeys();
-
     auto s = to2Ds(hall, [](auto& l) { return l; }, [](auto& l) { return "."; }, to2DsFlags::full_header, ' ', 1);
     cout << s;
-
-
-    //auto res = BFS();
-    //auto res = BFS2();
 
     QueDist que;
     Point endPt = teleportPoints["ZZ"].first;
@@ -504,7 +189,7 @@ void Dependencies()
         Point ptx = n;
         ptx.z = 0;
 
-        SimplePointData newDataPoint{ ptx , crEl.dist + 1, crEl.depth + n.z, crEl.prev };
+        SimplePointData newDataPoint{ ptx , crEl.dist + 1, crEl.depth + goDeep ? n.z : 0, crEl.prev };
 
         if (newDataPoint.depth > 0)
           continue;
@@ -660,8 +345,8 @@ TEST_CASE("Part One", "[x.]") {
   //toClipboard(Solve(ReadFileToString(L"input.txt")).Do(12, 2));
 }
 
-TEST_CASE("Part Two", "[.]") {
+TEST_CASE("Part Two", "[x.]") {
   cout << endl << "Part Two ------------- " << endl;
 
-  toClipboard(Solve(ReadFileToString(L"input.txt")).Do());
+  toClipboard(Solve(ReadFileToString(L"input.txt")).Do(true));
 }
