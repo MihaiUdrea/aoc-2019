@@ -249,10 +249,10 @@ struct to2DsFlags {
 };
 
 template <class _Col>
-pair<Point,Point> MinMax(const _Col& _Collection, std::function<Point(const typename _Col::value_type&)> toPtFct)
+pair<Point, Point> MinMax(const _Col& _Collection, std::function<Point(const typename _Col::value_type&)> toPtFct)
 {
-  auto & flatList = _Collection;
-  
+  auto& flatList = _Collection;
+
   auto limX = minmax_element(flatList.begin(), flatList.end(), [&](auto& l, auto& r) {
     return toPtFct(l).x < toPtFct(r).x;
     });
@@ -271,14 +271,13 @@ pair<Point,Point> MinMax(const _Col& _Collection, std::function<Point(const type
 
 // auto ss = to2Ds(vals, [](auto& l) { return l.x; }, [](auto& l) { return string() + l.ch; }, to2DsFlags::full_header, '.', 1);
 template <class _Col>
-string to2Ds(const _Col& _Collection, std::function<Point(const typename _Col::value_type&)> toPtFct, std::function<string(const typename _Col::value_type&)> toStringFct,
-  to2DsFlags::DisplayMode mode = to2DsFlags::no_header, char fill = ' ', int charWidth = 1)
+string to2Ds(const _Col& _Collection, std::function<Point(const typename _Col::value_type&, size_t)> toPtFct, std::function<string(const typename _Col::value_type&)> toStringFct,
+  to2DsFlags::DisplayMode mode = to2DsFlags::no_header, char fill = ' ', int charWidth = 1, Point min = {}, Point max = {})
 {
   map<Point, string> flatList;
+  size_t idx = 0;
   for_each(_Collection.begin(), _Collection.end(), [&](auto& el) {
-    Point pt = toPtFct(el);
-    pt.z = 0;
-
+    Point pt = toPtFct(el, idx++);
     string str = toStringFct(el);
     flatList[pt] = str;
     });
@@ -290,9 +289,11 @@ string to2Ds(const _Col& _Collection, std::function<Point(const typename _Col::v
     return l.first.y < r.first.y;
     });
 
-  Point min{ limX.first->first.x, limY.first->first.y };
-  Point max{ limX.second->first.x, limY.second->first.y };
-
+  if (min == max)
+  {
+    min = Point{ limX.first->first.x, limY.first->first.y };
+    max = Point{ limX.second->first.x, limY.second->first.y };
+  }
 
   int minCol = min.x;
 
