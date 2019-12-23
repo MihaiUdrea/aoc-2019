@@ -4,157 +4,781 @@
 #include "catch.hpp"
 #include "Utils.h"
 #include "Program.h"
+#include "DealincInlUniqueBig.cpp"
+#include "functional"
 
-struct PointData
-{
-  Point point;
-  int dist = 0;
-};
+#include <boost/multiprecision/cpp_int.hpp>
+#include <boost/integer/mod_inverse.hpp>
 
-struct DirSteps {
-  char dir;
-  int steps;
-};
+namespace mp = boost::multiprecision;
+
+//#define CARDS 10
+//#define CARDS 10007
+//#define CARDS 211
+
+#define CARDS       119315717514047
+#define CICLE_TOTAL 101741582076661
 
 
 struct Data
 {
-  set<Point> points;
-  map<Point, int> dists;
-  vector<DirSteps> inputDirSteps;
-};
-
-
-#define COP_SIZE /** / 5 /**/ 50 /**/
-
-struct Solve {
-  
-  Solve(const string& inStr)  {
-
-    progs.reserve(COP_SIZE);
-    for (auto i : irange(0, COP_SIZE))
-    {
-      Program p({}, {i}, inStr, true);
-      progs.push_back(std::move(p));
-    }
-    for (auto& i : progs)
-      i.Init();
+  enum Type
+  {
+    cut,
+    dealnew,
+    dealincrement
   };
 
-  vector<Program> progs;
-  
-  string Do()
+  Type type;
+  int v;
+};
+
+#define CARDS2 0
+
+size_t New(size_t x) {
+  return CARDS - 1 - x;
+}
+
+size_t Cut1(size_t x) {
+  return  (CARDS + -1353 + x) > CARDS ? ((CARDS + -1353 + x) - CARDS) : (CARDS + -1353 + x);
+}
+size_t Cut3(size_t x)   { return  (CARDS + -716 + x)  > CARDS ? ((CARDS + -716 + x)  - CARDS) : (CARDS  + -716 + x); }
+size_t Cut5(size_t x)   { return  (CARDS2 + 1364 + x) > CARDS ? ((CARDS2 + 1364 + x) - CARDS) : (CARDS2 + 1364 + x); }
+size_t Cut7(size_t x)   { return  (CARDS2 + 1723 + x) > CARDS ? ((CARDS2 + 1723 + x) - CARDS) : (CARDS2 + 1723 + x); }
+size_t Cut10(size_t x)  { return  (CARDS2 + 11 + x)   > CARDS ? ((CARDS2 + 11 + x)   - CARDS) : (CARDS2 + 11 + x); }
+size_t Cut12(size_t x)  { return  (CARDS + -6297 + x) > CARDS ? ((CARDS + -6297 + x) - CARDS) : (CARDS  + -6297 + x); }
+size_t Cut14(size_t x)  { return  (CARDS + -3560 + x) > CARDS ? ((CARDS + -3560 + x) - CARDS) : (CARDS  + -3560 + x); }
+size_t Cut16(size_t x)  { return  (CARDS2 + 1177 + x) > CARDS ? ((CARDS2 + 1177 + x) - CARDS) : (CARDS2 + 1177 + x); }
+size_t Cut18(size_t x)  { return  (CARDS2 + 6033 + x) > CARDS ? ((CARDS2 + 6033 + x) - CARDS) : (CARDS2 + 6033 + x); }
+size_t Cut20(size_t x)  { return  (CARDS + -3564 + x) > CARDS ? ((CARDS + -3564 + x) - CARDS) : (CARDS  + -3564 + x); }
+size_t Cut22(size_t x)  { return  (CARDS2 + 6447 + x) > CARDS ? ((CARDS2 + 6447 + x) - CARDS) : (CARDS2 + 6447 + x); }
+size_t Cut24(size_t x)  { return  (CARDS + -4030 + x) > CARDS ? ((CARDS + -4030 + x) - CARDS) : (CARDS  + -4030 + x); }
+size_t Cut26(size_t x)  { return  (CARDS + -6511 + x) > CARDS ? ((CARDS + -6511 + x) - CARDS) : (CARDS  + -6511 + x); }
+size_t Cut28(size_t x)  { return  (CARDS + -8748 + x) > CARDS ? ((CARDS + -8748 + x) - CARDS) : (CARDS  + -8748 + x); }
+size_t Cut30(size_t x)  { return  (CARDS2 + 5816 + x) > CARDS ? ((CARDS2 + 5816 + x) - CARDS) : (CARDS2 + 5816 + x); }
+size_t Cut32(size_t x)  { return  (CARDS2 + 9892 + x) > CARDS ? ((CARDS2 + 9892 + x) - CARDS) : (CARDS2 + 9892 + x); }
+size_t Cut34(size_t x)  { return  (CARDS + -9815 + x) > CARDS ? ((CARDS + -9815 + x) - CARDS) : (CARDS  + -9815 + x); }
+size_t Cut36(size_t x)  { return  (CARDS2 + 673 + x)  > CARDS ? ((CARDS2 + 673 + x)  - CARDS) : (CARDS2 + 673 + x); }
+size_t Cut38(size_t x)  { return  (CARDS2 + 4518 + x) > CARDS ? ((CARDS2 + 4518 + x) - CARDS) : (CARDS2 + 4518 + x); }
+size_t Cut40(size_t x)  { return  (CARDS2 + 9464 + x) > CARDS ? ((CARDS2 + 9464 + x) - CARDS) : (CARDS2 + 9464 + x); }
+size_t Cut42(size_t x)  { return  (CARDS2 + 902 + x)  > CARDS ? ((CARDS2 + 902 + x)  - CARDS) : (CARDS2 + 902 + x); }
+size_t Cut46(size_t x)  { return  (CARDS + -5167 + x) > CARDS ? ((CARDS + -5167 + x) - CARDS) : (CARDS  + -5167 + x); }
+size_t Cut50(size_t x)  { return  (CARDS + -8945 + x) > CARDS ? ((CARDS + -8945 + x) - CARDS) : (CARDS  + -8945 + x); }
+size_t Cut53(size_t x)  { return  (CARDS2 + 3195 + x) > CARDS ? ((CARDS2 + 3195 + x) - CARDS) : (CARDS2 + 3195 + x); }
+size_t Cut55(size_t x)  { return  (CARDS + -1494 + x) > CARDS ? ((CARDS + -1494 + x) - CARDS) : (CARDS  + -1494 + x); }
+size_t Cut57(size_t x)  { return  (CARDS + -9658 + x) > CARDS ? ((CARDS + -9658 + x) - CARDS) : (CARDS  + -9658 + x); }
+size_t Cut59(size_t x)  { return  (CARDS + -4689 + x) > CARDS ? ((CARDS + -4689 + x) - CARDS) : (CARDS  + -4689 + x); }
+size_t Cut61(size_t x)  { return  (CARDS + -9697 + x) > CARDS ? ((CARDS + -9697 + x) - CARDS) : (CARDS  + -9697 + x); }
+size_t Cut63(size_t x)  { return  (CARDS + -6857 + x) > CARDS ? ((CARDS + -6857 + x) - CARDS) : (CARDS  + -6857 + x); }
+size_t Cut65(size_t x)  { return  (CARDS + -6790 + x) > CARDS ? ((CARDS + -6790 + x) - CARDS) : (CARDS  + -6790 + x); }
+size_t Cut69(size_t x)  { return  (CARDS + -9354 + x) > CARDS ? ((CARDS + -9354 + x) - CARDS) : (CARDS  + -9354 + x); }
+size_t Cut71(size_t x)  { return  (CARDS2 + 8815 + x) > CARDS ? ((CARDS2 + 8815 + x) - CARDS) : (CARDS2 + 8815 + x); }
+size_t Cut73(size_t x)  { return  (CARDS2 + 6618 + x) > CARDS ? ((CARDS2 + 6618 + x) - CARDS) : (CARDS2 + 6618 + x); }
+size_t Cut75(size_t x)  { return  (CARDS + -6746 + x) > CARDS ? ((CARDS + -6746 + x) - CARDS) : (CARDS  + -6746 + x); }
+size_t Cut77(size_t x)  { return  (CARDS2 + 1336 + x) > CARDS ? ((CARDS2 + 1336 + x) - CARDS) : (CARDS2 + 1336 + x); }
+size_t Cut79(size_t x)  { return  (CARDS2 + 6655 + x) > CARDS ? ((CARDS2 + 6655 + x) - CARDS) : (CARDS2 + 6655 + x); }
+size_t Cut81(size_t x)  { return  (CARDS2 + 8941 + x) > CARDS ? ((CARDS2 + 8941 + x) - CARDS) : (CARDS2 + 8941 + x); }
+size_t Cut83(size_t x)  { return  (CARDS + -3046 + x) > CARDS ? ((CARDS + -3046 + x) - CARDS) : (CARDS  + -3046 + x); }
+size_t Cut85(size_t x)  { return  (CARDS + -7818 + x) > CARDS ? ((CARDS + -7818 + x) - CARDS) : (CARDS  + -7818 + x); }
+size_t Cut87(size_t x)  { return  (CARDS2 + 4140 + x) > CARDS ? ((CARDS2 + 4140 + x) - CARDS) : (CARDS2 + 4140 + x); }
+size_t Cut89(size_t x)  { return  (CARDS2 + 6459 + x) > CARDS ? ((CARDS2 + 6459 + x) - CARDS) : (CARDS2 + 6459 + x); }
+size_t Cut91(size_t x)  { return  (CARDS + -6791 + x) > CARDS ? ((CARDS + -6791 + x) - CARDS) : (CARDS  + -6791 + x); }
+size_t Cut93(size_t x)  { return  (CARDS2 + 3821 + x) > CARDS ? ((CARDS2 + 3821 + x) - CARDS) : (CARDS2 + 3821 + x); }
+size_t Cut95(size_t x)  { return  (CARDS2 + 3157 + x) > CARDS ? ((CARDS2 + 3157 + x) - CARDS) : (CARDS2 + 3157 + x); }
+size_t Cut97(size_t x)  { return  (CARDS2 + 8524 + x) > CARDS ? ((CARDS2 + 8524 + x) - CARDS) : (CARDS2 + 8524 + x); }
+size_t Cut100(size_t x) { return  (CARDS2 + 5944 + x) > CARDS ? ((CARDS2 + 5944 + x) - CARDS) : (CARDS2 + 5944 + x); }
+
+
+
+
+
+vector< std::function<size_t(size_t)> > opList{
+Cut1  ,
+DealInc63,
+Cut3  ,
+DealInc55,
+Cut5  ,
+DealInc61,
+Cut7  ,
+New,
+DealInc51,
+Cut10 ,
+DealInc65,
+Cut12 ,
+DealInc69,
+Cut14 ,
+DealInc20,
+Cut16 ,
+DealInc29,
+Cut18 ,
+DealInc3,
+Cut20 ,
+New,
+Cut22 ,
+New,
+Cut24 ,
+DealInc3,
+Cut26 ,
+DealInc42,
+Cut28 ,
+DealInc38,
+Cut30 ,
+DealInc73,
+Cut32 ,
+DealInc16,
+Cut34 ,
+DealInc10,
+Cut36 ,
+DealInc12,
+Cut38 ,
+DealInc52,
+Cut40 ,
+DealInc68,
+Cut42 ,
+DealInc11,
+New,
+DealInc45,
+Cut46,
+DealInc68,
+New,
+DealInc24,
+Cut50 ,
+New,
+DealInc36,
+Cut53 ,
+DealInc52,
+Cut55 ,
+DealInc11,
+Cut57 ,
+New,
+Cut59 ,
+DealInc34,
+Cut61 ,
+DealInc39,
+Cut63 ,
+DealInc19,
+Cut65 ,
+DealInc59,
+New,
+DealInc52,
+Cut69 ,
+DealInc71,
+Cut71 ,
+DealInc2,
+Cut73 ,
+DealInc47,
+Cut75 ,
+New,
+Cut77 ,
+DealInc53,
+Cut79 ,
+DealInc17,
+Cut81 ,
+DealInc25,
+Cut83 ,
+DealInc14,
+Cut85 ,
+DealInc25,
+Cut87 ,
+DealInc60,
+Cut89 ,
+DealInc27,
+Cut91 ,
+New,
+Cut93 ,
+DealInc13,
+Cut95 ,
+DealInc13,
+Cut97 ,
+New,
+DealInc12,
+Cut100
+};
+
+using myt = __int64;
+
+
+
+size_t Back(size_t x, int startPos)
+{
+  for (int i = startPos - 1; i >= 0; i--)
+    x = opList[i](x);
+
+  return x;
+}
+
+size_t BackInl(size_t x)
+{
+
+  x = Cut100(x);
+  x = DealInc12(x);
+  x = New(x);
+  x = Cut97(x);
+  x = DealInc13(x);
+  x = Cut95(x);
+  x = DealInc13(x);
+  x = Cut93(x);
+  x = New(x);
+  x = Cut91(x);
+  x = DealInc27(x);
+  x = Cut89(x);
+  x = DealInc60(x);
+  x = Cut87(x);
+  x = DealInc25(x);
+  x = Cut85(x);
+  x = DealInc14(x);
+  x = Cut83(x);
+  x = DealInc25(x);
+  x = Cut81(x);
+  x = DealInc17(x);
+  x = Cut79(x);
+  x = DealInc53(x);
+  x = Cut77(x);
+  x = New(x);
+  x = Cut75(x);
+  x = DealInc47(x);
+  x = Cut73(x);
+  x = DealInc2(x);
+  x = Cut71(x);
+  x = DealInc71(x);
+  x = Cut69(x);
+  x = DealInc52(x);
+  x = New(x);
+  x = DealInc59(x);
+  x = Cut65(x);
+  x = DealInc19(x);
+  x = Cut63(x);
+  x = DealInc39(x);
+  x = Cut61(x);
+  x = DealInc34(x);
+  x = Cut59(x);
+  x = New(x);
+  x = Cut57(x);
+  x = DealInc11(x);
+  x = Cut55(x);
+  x = DealInc52(x);
+  x = Cut53(x);
+  x = DealInc36(x);
+  x = New(x);
+  x = Cut50(x);
+  x = DealInc24(x);
+  x = New(x);
+  x = DealInc68(x);
+  x = Cut46(x);
+  x = DealInc45(x);
+  x = New(x);
+  x = DealInc11(x);
+  x = Cut42(x);
+  x = DealInc68(x);
+  x = Cut40(x);
+  x = DealInc52(x);
+  x = Cut38(x);
+  x = DealInc12(x);
+  x = Cut36(x);
+  x = DealInc10(x);
+  x = Cut34(x);
+  x = DealInc16(x);
+  x = Cut32(x);
+  x = DealInc73(x);
+  x = Cut30(x);
+  x = DealInc38(x);
+  x = Cut28(x);
+  x = DealInc42(x);
+  x = Cut26(x);
+  x = DealInc3(x);
+  x = Cut24(x);
+  x = New(x);
+  x = Cut22(x);
+  x = New(x);
+  x = Cut20(x);
+  x = DealInc3(x);
+  x = Cut18(x);
+  x = DealInc29(x);
+  x = Cut16(x);
+  x = DealInc20(x);
+  x = Cut14(x);
+  x = DealInc69(x);
+  x = Cut12(x);
+  x = DealInc65(x);
+  x = Cut10(x);
+  x = DealInc51(x);
+  x = New(x);
+  x = Cut7(x);
+  x = DealInc61(x);
+  x = Cut5(x);
+  x = DealInc55(x);
+  x = Cut3(x);
+  x = DealInc63(x);
+  x = Cut1(x);
+
+  return x;
+}
+
+struct Solve : Program {
+
+  vector<Data> vec;
+  map<size_t, mp::int128_t> moduloInvMap;
+  Solve(const string& inStr) : Program({}, { 0 }, inStr, false) {
+
+    forEachLine(inStr, [&](string line)
+      {
+        Data dat;
+        auto res = match_rx(line, regex(R"~(cut (.+))~"));
+        auto res2 = match_rx(line, regex(R"~(deal with increment (.+))~"));
+        auto res3 = match_rx(line, regex(R"~(deal into new stack)~"));
+        if (!res.empty())
+        {
+          dat.type = Data::cut;
+          dat.v = stoi(res[1].str());
+        }
+        else if (!res2.empty())
+        {
+          dat.type = Data::dealincrement;
+          dat.v = stoi(res2[1].str());
+
+          moduloInvMap[dat.v] = boost::integer::mod_inverse<mp::int128_t>(dat.v, CARDS);
+        }
+        else
+        {
+          assert(!res3.empty());
+          dat.type = Data::dealnew;
+        }
+
+        vec.push_back(dat);
+      });
+  };
+
+
+  size_t IncDeal(size_t p, size_t inc)
   {
-    int quota = 150;
-    int perPackBoost = 200;
-    int prevY = -1;
-    set<int> waiting;
-    map<int, deque<Point>> packages;
-    for(;;)
+    auto mi = moduloInvMap[inc];
+    auto mis = mi.convert_to<string>();
+    mp::int128_t res = ((mp::int128_t)p * mi) % CARDS;
+    auto resS = res.convert_to<string>();
+
+    return static_cast<size_t>(res);
+  }
+
+  static size_t NewDeal(size_t p) {
+    return CARDS - 1 - p;
+  }
+
+  static size_t Cut(size_t x, size_t howMuch)
+  {
+    return  (CARDS + howMuch + x) > CARDS ? ((CARDS + howMuch + x) - CARDS) : (CARDS + howMuch + x);
+  }
+
+  size_t BackInv(size_t x, int startPos)
+  {
+    for (int i = startPos - 1; i >= 0; i--)
     {
-      int packCount = 0;
-      for (auto i : irange(0, COP_SIZE))
-        packCount += packages[i].size();
-
-      if (packCount == 0 && waiting.size() == COP_SIZE)
+      switch (vec[i].type)
       {
-        if (packages[255].front().y == prevY)
-        {
-          cout << "PREV Y: " << prevY;
-          return to_string(prevY);
-        }
-        prevY = packages[255].front().y;
-        packages[0] = packages[255];
+      case Data::dealincrement:
+        x = IncDeal(x, vec[i].v);
+        break;
+      case Data::dealnew:
+        x = NewDeal(x);
+        break;
+      case Data::cut:
+        x = Cut(x, vec[i].v);
+      default:
+        break;
       }
-      for (auto i : irange(0, COP_SIZE))
+    }
+
+    return x;
+  }
+
+  vector<size_t> deck, table;
+
+  string List(int target)
+  {
+    deck.resize(10007);
+    table.resize(10007);
+
+    for (auto i : irange(0, deck.size()))
+    {
+      deck[i] = i;
+    }
+
+
+    set<int> delDone;
+    for (auto m : vec)
+    {
+      switch (m.type)
       {
-        Program& p = progs[i];
+      case Data::cut:
+      {
 
-        //SetPorts({ /*in*/ }, {});
+        break;
+      }
+      case Data::dealnew:
+      {
 
-        auto read = [&]() -> int_t {
-          auto& que = packages[i];
-          if (que.empty())
-          {
-            waiting.insert(i);
-            return -1;
-          }
+        break;
+      }
+      default:
+      {
+        ofstream out;
+        //string fileName("Dealinc" + to_string(m.v) + ".txt");
+        //out.open(fileName.c_str(), ios_base::trunc);
+        if (!delDone.insert(m.v).second)
+          break;
 
-          Point pk = que.front();
-          que.pop_front();
+        string fileName("DealincInl.cpp");
+        out.open(fileName.c_str(), ios_base::app);
 
-          p.regA.push_back(pk.x);
-          return pk.y;
-        };
-
-        int qt = quota + packages[i].size() * perPackBoost;
-
-        waiting.erase(i);
-        auto res = p.Run(read, 1, qt);
-        if (res == Program::outputReady)
+        int tablePos = 0;
+        for (auto i : irange(0, table.size()))
         {
-          if (p.output[0] != -1)
-          {
-            p.Run(read, 3);
-
-
-            if (p.output[0] == 255)
-            {
-              //cout << " 255 , Y=" << p.output[2];
-              //return to_string(p.output[2]);
-              packages[p.output[0]] = { Point{ p.output[1], p.output[2] } };
-            }
-            else
-              packages[p.output[0]].push_back(Point{ p.output[1], p.output[2] });
-          }
-
-
-          copy(p.output.begin(), p.output.end(),
-            ostream_iterator<int_t>(cout));
-          cout << endl;
-
-          p.output.clear();
+          table[tablePos] = deck[i];
+          tablePos = (tablePos + m.v) % deck.size();
         }
+
+        //std::swap(table, deck);
+        if (0)
+        {
+          string bd;
+          bd += "size_t DealInc" + to_string(m.v) + "(size_t x){  auto d = x / " + to_string(m.v) + "; auto m = x % " + to_string(m.v) + ";\n";
+          bd += "static constexpr array<size_t, " + to_string(m.v) + "> start = {";
+          //auto s = to2Ds(table, [&](auto l, size_t idx) {return Point{ (int)idx % m.v, (int)idx / m.v }; }, [](auto l) {return to_string(l); }, to2DsFlags::full_header, ' ', 5);
+          auto s = to2Ds(table, [&](auto l, size_t idx) {return Point{ (int)idx % m.v, (int)idx / m.v }; }, [](auto l) {return to_string(l) + ','; }, to2DsFlags::no_header, ' ', 5,
+            { 0, 0 }, { m.v, 0 });
+
+          bd += s;
+          bd += "}; return start[m] + d; }\n";
+
+          out << bd;
+        }
+
+        // ------------------
+        size_t lines = CARDS / m.v;
+        size_t mod = CARDS % m.v;
+        size_t cols = m.v;
+        int firstSmallCols = mod;
+
+        size_t colInc = m.v - mod;
+        vector<size_t> cache;
+        cache.resize(cols);
+        int prevCol = 0;
+        int newCol = 0;
+        for (auto step : irange(0, cols))
+        {
+          newCol = (prevCol + colInc) % cols;
+          size_t incWith = lines + 1;
+
+          if (prevCol >= firstSmallCols)
+            incWith--;
+          cache[newCol] = cache[prevCol] + incWith;
+
+          prevCol = newCol;
+        }
+        cache[0] = 0;
+
+        {
+          string bd;
+          bd += "size_t DealInc" + to_string(m.v) + "(size_t x){  auto d = x / " + to_string(m.v) + "; auto m = x % " + to_string(m.v) + ";\n";
+          bd += "static constexpr array<size_t, " + to_string(m.v) + "> start = {";
+          //auto s = to2Ds(table, [&](auto l, size_t idx) {return Point{ (int)idx % m.v, (int)idx / m.v }; }, [](auto l) {return to_string(l); }, to2DsFlags::full_header, ' ', 5);
+          stringstream s;
+          for (auto v : cache)
+            s << v << ", ";
+
+          bd += s.str();
+          bd += "}; return start[m] + d; }\n";
+
+          out << bd;
+        }
+        break;
+      }
+      }
+
+      if (0)
+        for (auto card : deck)
+          cout << std::setfill(' ') << setw(5) << card;
+
+      //copy(deck.begin(), deck.end(), ostream_iterator<size_t>(cout));
+
+    }
+
+    for (auto i : irange(0, deck.size()))
+    {
+      if (deck[i] == target)
+        return to_string(i);
+    }
+
+
+    return "-1";
+  }
+
+  string Do(int target)
+  {
+    deck.resize(CARDS);
+    table.resize(CARDS);
+
+    int cols = 3589;
+    for (auto i : irange(0, deck.size()))
+    {
+      deck[i] = i;
+    }
+
+    int step = 0;
+    for (auto m : vec)
+    {
+      switch (m.type)
+      {
+      case Data::cut:
+      {
+        cout << "\Cut : " << m.v << " : ";
+
+        int cutPos = m.v > 0 ? m.v : deck.size() + m.v;
+        for (auto i : irange(0, deck.size() - cutPos))
+          table[i] = deck[i + cutPos];
+        for (auto i : irange(deck.size() - cutPos, deck.size()))
+          table[i] = deck[i - deck.size() + cutPos];
+
+        std::swap(table, deck);
+
+        auto s = to2Ds(deck, [&](auto l, size_t idx) {return Point{ (int)idx % 50, (int)idx / 50 }; }, [](auto l) {return to_string(l); }, to2DsFlags::full_header, ' ', 5);
+        cout << endl << s;
+
+        break;
+      }
+      case Data::dealnew:
+      {
+        cout << "\nDeal new line : --------------------------------";
+        for (auto i : irange(0, deck.size() / 2))
+          std::swap(deck[i], deck[deck.size() - i - 1]);
+
+        auto s = to2Ds(deck, [&](auto l, size_t idx) {return Point{ (int)idx % 50, (int)idx / 50 }; }, [](auto l) {return to_string(l); }, to2DsFlags::full_header, ' ', 5);
+        cout << endl << s;
+
+        break;
+      }
+      default:
+      {
+        //cout << "\nDeal with increment: " << m.v << " : \n";
+        int tablePos = 0;
+        for (auto i : irange(0, table.size()))
+        {
+          table[tablePos] = deck[i];
+          tablePos = (tablePos + m.v) % deck.size();
+        }
+        std::swap(table, deck);
+
+        auto s = to2Ds(deck, [&](auto l, size_t idx) {return Point{ (int)idx % m.v, (int)idx / m.v }; }, [](auto l) {return to_string(l); }, to2DsFlags::full_header, ' ', 5);
+        cout << endl << s;
+
+        auto p = Back(10, step + 1);
+        break;
+      }
+      }
+
+      if (0)
+        for (auto card : deck)
+          cout << std::setfill(' ') << setw(5) << card;
+
+      //copy(deck.begin(), deck.end(), ostream_iterator<size_t>(cout));
+
+      step++;
+
+
+      //check we know ehre 2019 is
+      size_t res = 0;
+      for (auto i : irange(0, deck.size()))
+      {
+        if (deck[i] == target)
+        {
+          res = i;
+          break;
+        }
+      }
+
+      if (auto c = Back(res, step) != target)
+      {
+        cout << "Bad " << c;
+      }
+
+      if (auto c = BackInv(res, step) != target)
+      {
+        cout << "Bad " << c;
+      }
+    }
+
+    size_t res = 0;
+    for (auto i : irange(0, deck.size()))
+    {
+      if (deck[i] == target)
+      {
+        res = i;
+        break;
+      }
+    }
+
+    auto p2 = Back(res, opList.size());
+
+    return to_string(res);
+  }
+
+  auto GetAtStep(size_t step, mp::int128_t a, mp::int128_t b)
+  {
+  mp::int128_t resultA = (mp::powm(a, step, CARDS) * 2020) % CARDS;
+  cout << "ResA:" << resultA.convert_to<string>() << endl;
+  mp::int128_t resultB = ((b * (mp::powm(a, step, CARDS) - 1))%CARDS) * boost::integer::mod_inverse<mp::int128_t>(a - 1, CARDS);
+  cout << "ResB:" << resultB.convert_to<string>() << endl;
+
+  auto res = (resultA + resultB) % CARDS;
+  cout << "SOL: " << res.convert_to<string>();
+  return res.convert_to<string>();
+  }
+
+  vector<size_t> prev;
+  map<size_t, size_t> vals;
+  vector<pair<string,string>> prevIDX;
+  string Do2()
+  {
+    //vector<size_t> histSet;
+    //histSet.resize(CARDS / 1024);
+
+    size_t b = BackInl(0);
+    size_t a = BackInl(1) - b;
+    {
+      size_t b1 = BackInv(0,100);
+      size_t a1 = BackInv(1,100) - b;
+    }
+    size_t start = 2020;
+    prev.push_back(2020);
+    for (size_t i = /*123402*/ CICLE_TOTAL; i > 0; i--)
+    {
+      //start = Back(start, opList.size());
+      start = BackInl(start);
+
+      //cout << "\n step : " << i << " val: " << start << " ";
+      if (1)
+        //if (vals.insert({ start, i}).second == false)
+        if (start == 2020)
+        {
+          /** /
+          auto xi = prev[253];
+          auto res = Back(xi, 61);
+          cout << "RES: " << res;
+          /**/
+
+          cout << " been here ";
+          cout << " Found in history at step: " << vals[start];
+          auto interval = CICLE_TOTAL - i + 1;
+
+          cout << " Interval: " << interval;
+
+          size_t whereTojump = i - (i / interval) * interval;
+
+          if (1)
+            i = whereTojump;
+
+          cout << " Same will be in " << whereTojump;
+
+        }
+      if (1)
+        prev.push_back(start);
+
+      if (prev.size() >= 3)
+      {
+        mp::int128_t f1 = prev[prev.size() - 2];
+        mp::int128_t f2 = prev[prev.size() - 1];
+        auto x2 = f1;
+        auto x1 = prev[prev.size() - 3];
+
+        mp::int128_t a = (f2 - f1) * boost::integer::mod_inverse<mp::int128_t>(CARDS + x2 - x1, CARDS) % CARDS;
+        mp::int128_t b = (f1 - a * x1)%CARDS;
+        if (b < 0)
+          b += CARDS;
+        if (a < 0)
+          a += CARDS;
+        cout << "A:" << a.convert_to<string>() << endl;
+        cout << "B:" << b.convert_to<string>() << endl;
+      
+        auto res = GetAtStep(CICLE_TOTAL, a, b);
+
+        prevIDX.emplace_back( a.convert_to<string>(), b.convert_to<string>());
+
+        size_t nr = prev[prev.size() - 1] - prev[prev.size() - 2];
+        size_t num = prev[prev.size() - 2] - prev[prev.size() - 3];
+
+        cout << "A: " << a << endl;
+      }
+
+      if (1)
+        if (i % 1000000 == 1)
+        {
+          cout << i << " : " << start << " " << ((double)i) / 101741582076661. << endl;
+        }
+
+      if (0)
+      {
+        cout << start << endl;
       }
 
     }
-    
 
+    cout << " : " << start << " " << endl;
 
-    return ToString(1);
-  }
-
-  string Do2()
-  {
-
-    return ToString(1);
+    return ToString(start);
   }
 };
 
 TEST_CASE("Sample 1", "[.]") {
   cout << endl << "Tests   ------------- " << endl;
 
-  //REQUIRE(Solve("109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99").JustRun({}) == 99); // print yourself 
+  REQUIRE(Solve(R"(deal with increment 63
+deal into new stack
+deal into new stack
+)").Do(9) == "3");
 
-  //REQUIRE(Solve("").Do() == "6"); // sample part 1
-  //REQUIRE(Solve("").Do2() == "30"); // sample part 2
-  //REQUIRE(Solve(ReadFileToString(L"sample/sample.txt")).Do() == ReadFileToString(L"sample/result.txt"));
+  REQUIRE(Solve(R"(deal with increment 7
+deal into new stack
+deal into new stack
+)").Do(9) == "3");
+
+  REQUIRE(Solve(R"(cut 6
+deal with increment 7
+deal into new stack
+)").Do(9) == "8");
+
+  REQUIRE(Solve(R"(deal with increment 7
+deal with increment 9
+cut -2
+)").Do(9) == "9");
+
+  REQUIRE(Solve(R"(deal into new stack
+cut -2
+deal with increment 7
+cut 8
+cut -4
+deal with increment 7
+cut 3
+deal with increment 9
+deal with increment 3
+cut -1
+)").Do(9) == "0");
+
 }
 
-TEST_CASE("Part One", "[x.]") {
+TEST_CASE("Part One", "[.]") {
   cout << endl << "Part One ------------- " << endl;
-  toClipboard(Solve(ReadFileToString(L"input.txt")).Do());
+  toClipboard(Solve(ReadFileToString(L"input.txt")).Do(2019));
   //toClipboard(Solve(ReadFileToString(L"input.txt")).Do(12, 2));
 }
 
-TEST_CASE("Part Two", "[.]") {
+TEST_CASE("Part Two", "[x.]") {
+  toClipboard(Solve(ReadFileToString(L"input.txt")).Do2());
+  //auto x = Cut40(119315717514046);
+  //cout << x;
+
+  //x = DealInc3(119315717514046);
+  //cout << x;
+
   cout << endl << "Part Two ------------- " << endl;
 
-  toClipboard(Solve(ReadFileToString(L"input.txt")).Do2());
+  //toClipboard(Solve(ReadFileToString(L"input.txt")).Do2());
 }
-
-/* Input ---------------
-
-3,62,1001,62,11,10,109,2219,105,1,0,1618,1375,2066,1202,1967,934,1295,771,1029,1099,1480,1406,1264,1690,866,2130,1235,1134,1330,903,802,1783,612,1874,1659,1171,1066,1996,2159,2031,705,1447,2097,2188,1934,736,1517,998,676,1587,1814,571,969,643,833,1719,1905,1845,1752,1554,0,0,0,0,0,0,0,0,0,0,0,0,3,64,1008,64,-1,62,1006,62,88,1006,61,170,1105,1,73,3,65,21001,64,0,1,20102,1,66,2,21102,105,1,0,1105,1,436,1201,1,-1,64,1007,64,0,62,1005,62,73,7,64,67,62,1006,62,73,1002,64,2,133,1,133,68,133,101,0,0,62,1001,133,1,140,8,0,65,63,2,63,62,62,1005,62,73,1002,64,2,161,1,161,68,161,1101,1,0,0,1001,161,1,169,102,1,65,0,1101,1,0,61,1102,0,1,63,7,63,67,62,1006,62,203,1002,63,2,194,1,68,194,194,1006,0,73,1001,63,1,63,1105,1,178,21102,210,1,0,106,0,69,2102,1,1,70,1101,0,0,63,7,63,71,62,1006,62,250,1002,63,2,234,1,72,234,234,4,0,101,1,234,240,4,0,4,70,1001,63,1,63,1105,1,218,1105,1,73,109,4,21101,0,0,-3,21101,0,0,-2,20207,-2,67,-1,1206,-1,293,1202,-2,2,283,101,1,283,283,1,68,283,283,22001,0,-3,-3,21201,-2,1,-2,1105,1,263,21202,-3,1,-3,109,-4,2106,0,0,109,4,21102,1,1,-3,21101,0,0,-2,20207,-2,67,-1,1206,-1,342,1202,-2,2,332,101,1,332,332,1,68,332,332,22002,0,-3,-3,21201,-2,1,-2,1106,0,312,22102,1,-3,-3,109,-4,2105,1,0,109,1,101,1,68,359,20102,1,0,1,101,3,68,367,20101,0,0,2,21102,376,1,0,1106,0,436,22101,0,1,0,109,-1,2106,0,0,1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768,65536,131072,262144,524288,1048576,2097152,4194304,8388608,16777216,33554432,67108864,134217728,268435456,536870912,1073741824,2147483648,4294967296,8589934592,17179869184,34359738368,68719476736,137438953472,274877906944,549755813888,1099511627776,2199023255552,4398046511104,8796093022208,17592186044416,35184372088832,70368744177664,140737488355328,281474976710656,562949953421312,1125899906842624,109,8,21202,-6,10,-5,22207,-7,-5,-5,1205,-5,521,21101,0,0,-4,21101,0,0,-3,21101,0,51,-2,21201,-2,-1,-2,1201,-2,385,470,21001,0,0,-1,21202,-3,2,-3,22207,-7,-1,-5,1205,-5,496,21201,-3,1,-3,22102,-1,-1,-5,22201,-7,-5,-7,22207,-3,-6,-5,1205,-5,515,22102,-1,-6,-5,22201,-3,-5,-3,22201,-1,-4,-4,1205,-2,461,1106,0,547,21101,-1,0,-4,21202,-6,-1,-6,21207,-7,0,-5,1205,-5,547,22201,-7,-6,-7,21201,-4,1,-4,1106,0,529,21202,-4,1,-7,109,-8,2106,0,0,109,1,101,1,68,564,20102,1,0,0,109,-1,2106,0,0,1101,0,91961,66,1101,6,0,67,1101,598,0,68,1101,302,0,69,1102,1,1,71,1101,0,610,72,1105,1,73,0,0,0,0,0,0,0,0,0,0,0,0,36,53902,1101,82891,0,66,1102,1,1,67,1101,0,639,68,1101,556,0,69,1102,1,1,71,1102,1,641,72,1106,0,73,1,160,11,236204,1102,66491,1,66,1101,2,0,67,1102,670,1,68,1102,351,1,69,1102,1,1,71,1101,674,0,72,1106,0,73,0,0,0,0,255,57557,1101,0,60661,66,1102,1,1,67,1102,1,703,68,1101,0,556,69,1101,0,0,71,1101,0,705,72,1106,0,73,1,1391,1102,76159,1,66,1102,1,1,67,1102,732,1,68,1102,1,556,69,1101,1,0,71,1101,734,0,72,1106,0,73,1,25,26,173378,1102,1,73259,66,1102,1,3,67,1102,763,1,68,1102,302,1,69,1102,1,1,71,1101,0,769,72,1105,1,73,0,0,0,0,0,0,8,168676,1102,51481,1,66,1101,1,0,67,1102,1,798,68,1101,556,0,69,1101,1,0,71,1101,0,800,72,1105,1,73,1,23,41,275883,1101,0,35851,66,1101,0,1,67,1102,1,829,68,1102,556,1,69,1102,1,1,71,1101,831,0,72,1105,1,73,1,-3,9,30777,1102,69557,1,66,1102,2,1,67,1101,860,0,68,1102,1,302,69,1101,1,0,71,1102,864,1,72,1106,0,73,0,0,0,0,9,20518,1101,69697,0,66,1102,4,1,67,1101,0,893,68,1102,1,302,69,1102,1,1,71,1102,901,1,72,1106,0,73,0,0,0,0,0,0,0,0,27,22973,1102,51767,1,66,1101,0,1,67,1102,930,1,68,1102,1,556,69,1101,1,0,71,1102,932,1,72,1105,1,73,1,1283,8,84338,1102,1,103387,66,1101,3,0,67,1102,961,1,68,1102,302,1,69,1101,1,0,71,1102,967,1,72,1105,1,73,0,0,0,0,0,0,29,95714,1102,1,17959,66,1102,1,1,67,1102,1,996,68,1101,0,556,69,1101,0,0,71,1101,0,998,72,1106,0,73,1,1171,1101,30971,0,66,1101,1,0,67,1102,1025,1,68,1102,1,556,69,1102,1,1,71,1102,1,1027,72,1106,0,73,1,2719,5,310161,1102,42169,1,66,1101,0,4,67,1101,0,1056,68,1102,1,302,69,1102,1,1,71,1101,0,1064,72,1105,1,73,0,0,0,0,0,0,0,0,31,98506,1101,86689,0,66,1102,1,2,67,1101,0,1093,68,1101,0,302,69,1101,1,0,71,1101,1097,0,72,1105,1,73,0,0,0,0,41,459805,1101,0,10259,66,1102,3,1,67,1102,1126,1,68,1101,0,302,69,1102,1,1,71,1101,1132,0,72,1106,0,73,0,0,0,0,0,0,29,143571,1101,0,81967,66,1102,1,1,67,1102,1,1161,68,1102,1,556,69,1102,4,1,71,1101,1163,0,72,1105,1,73,1,5,35,146518,10,64378,10,128756,11,59051,1101,96851,0,66,1101,0,1,67,1101,1198,0,68,1102,556,1,69,1102,1,1,71,1102,1,1200,72,1106,0,73,1,25471,45,11197,1102,1,35771,66,1101,2,0,67,1101,1229,0,68,1101,302,0,69,1101,1,0,71,1102,1,1233,72,1105,1,73,0,0,0,0,29,47857,1101,0,67853,66,1102,1,1,67,1102,1262,1,68,1102,1,556,69,1101,0,0,71,1102,1264,1,72,1106,0,73,1,1214,1102,1,83561,66,1101,0,1,67,1101,0,1291,68,1101,556,0,69,1102,1,1,71,1101,1293,0,72,1106,0,73,1,8087,35,219777,1101,92657,0,66,1102,1,3,67,1102,1,1322,68,1102,302,1,69,1101,0,1,71,1101,1328,0,72,1105,1,73,0,0,0,0,0,0,36,26951,1102,32251,1,66,1101,1,0,67,1101,1357,0,68,1101,0,556,69,1102,1,8,71,1101,0,1359,72,1105,1,73,1,1,44,69557,9,10259,45,22394,3,35771,5,206774,35,73259,8,42169,14,278788,1102,94771,1,66,1102,1,1,67,1101,1402,0,68,1101,556,0,69,1102,1,1,71,1102,1,1404,72,1105,1,73,1,15,14,69697,1101,0,59051,66,1102,6,1,67,1101,0,1433,68,1101,302,0,69,1101,1,0,71,1102,1,1445,72,1106,0,73,0,0,0,0,0,0,0,0,0,0,0,0,43,132982,1101,0,49253,66,1101,2,0,67,1101,0,1474,68,1102,1,302,69,1101,0,1,71,1101,1478,0,72,1106,0,73,0,0,0,0,36,107804,1102,1,32189,66,1102,4,1,67,1102,1507,1,68,1102,302,1,69,1102,1,1,71,1102,1,1515,72,1106,0,73,0,0,0,0,0,0,0,0,11,118102,1101,0,26951,66,1102,1,4,67,1101,1544,0,68,1102,1,253,69,1101,1,0,71,1101,1552,0,72,1105,1,73,0,0,0,0,0,0,0,0,43,66491,1102,101891,1,66,1102,1,1,67,1101,1581,0,68,1101,0,556,69,1101,2,0,71,1102,1583,1,72,1105,1,73,1,19,41,367844,14,139394,1102,9473,1,66,1102,1,1,67,1102,1,1614,68,1102,556,1,69,1102,1,1,71,1102,1,1616,72,1105,1,73,1,125,10,96567,1102,1,57557,66,1101,1,0,67,1101,0,1645,68,1101,556,0,69,1102,1,6,71,1101,0,1647,72,1106,0,73,1,29182,31,49253,27,45946,27,68919,6,92657,6,185314,6,277971,1102,1,17053,66,1102,1,1,67,1101,0,1686,68,1102,1,556,69,1102,1,1,71,1101,0,1688,72,1105,1,73,1,-203,14,209091,1101,0,61751,66,1102,1,1,67,1102,1,1717,68,1101,0,556,69,1102,0,1,71,1101,0,1719,72,1105,1,73,1,1520,1101,0,11197,66,1102,1,2,67,1101,1746,0,68,1102,302,1,69,1101,0,1,71,1101,1750,0,72,1105,1,73,0,0,0,0,3,71542,1102,1,33679,66,1101,1,0,67,1102,1779,1,68,1101,556,0,69,1102,1,1,71,1101,1781,0,72,1106,0,73,1,7,41,551766,1102,64891,1,66,1101,0,1,67,1101,0,1810,68,1101,556,0,69,1102,1,1,71,1101,0,1812,72,1106,0,73,1,35,8,126507,1101,0,3889,66,1102,1,1,67,1102,1841,1,68,1101,0,556,69,1101,0,1,71,1101,1843,0,72,1105,1,73,1,29,41,183922,1101,0,93871,66,1101,0,1,67,1102,1872,1,68,1101,0,556,69,1102,0,1,71,1101,1874,0,72,1105,1,73,1,1785,1101,104479,0,66,1102,1,1,67,1102,1,1901,68,1102,1,556,69,1101,0,1,71,1102,1903,1,72,1105,1,73,1,-5,41,91961,1101,0,83579,66,1101,0,1,67,1101,0,1932,68,1102,1,556,69,1101,0,0,71,1101,0,1934,72,1105,1,73,1,1058,1102,44179,1,66,1101,0,1,67,1101,0,1961,68,1101,0,556,69,1101,0,2,71,1101,0,1963,72,1106,0,73,1,2,11,177153,11,354306,1102,1,56167,66,1101,0,1,67,1102,1994,1,68,1101,556,0,69,1102,1,0,71,1101,1996,0,72,1106,0,73,1,1391,1101,0,22973,66,1101,3,0,67,1102,2023,1,68,1102,1,302,69,1102,1,1,71,1102,2029,1,72,1105,1,73,0,0,0,0,0,0,36,80853,1101,47857,0,66,1102,3,1,67,1101,0,2058,68,1101,253,0,69,1102,1,1,71,1101,2064,0,72,1106,0,73,0,0,0,0,0,0,26,86689,1102,1,43951,66,1102,1,1,67,1101,2093,0,68,1102,1,556,69,1101,0,1,71,1102,1,2095,72,1105,1,73,1,11213,44,139114,1101,39359,0,66,1101,1,0,67,1101,2124,0,68,1101,556,0,69,1102,1,2,71,1101,0,2126,72,1105,1,73,1,10,10,32189,11,295255,1101,102953,0,66,1102,1,1,67,1101,2157,0,68,1102,1,556,69,1102,0,1,71,1102,1,2159,72,1106,0,73,1,1816,1101,0,5569,66,1102,1,1,67,1101,0,2186,68,1101,0,556,69,1102,1,0,71,1102,2188,1,72,1105,1,73,1,1059,1102,1,23063,66,1102,1,1,67,1101,2215,0,68,1101,556,0,69,1101,0,1,71,1102,2217,1,72,1106,0,73,1,49,5,103387
-
- ------------Input End*/
