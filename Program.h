@@ -1,4 +1,4 @@
-using int_t = int;
+using int_t = LONGLONG;
 
 
 struct Program {
@@ -39,8 +39,11 @@ struct Program {
       forEachRxToken(rawInst, colsRxToken, [&](string instr) {
         instructions.push_back((int_t)atoll(instr.c_str()));
         });
-    }
+    }    
+  }
 
+  void Init()
+  {
     vector<InstrData> instrList{
       // Code Name                  ParamCount Sign      LogLead
       { 1, bind(&Program::Add,    this),    3, "+"       , ""             }, // LogLead empty only for 3 operators use v[3]
@@ -273,16 +276,17 @@ struct Program {
   enum RunResult
   {
     outputReady,
+    quotaend,
     finish
   };
 
   static int GetInput()
   {
-    cout << "NO INPUT" <<endl;
+    cout << "NO INPUT" << endl;
     exit(1);
   }
 
-  RunResult RunFromStartRestoreWithInput(vector<int> in)
+  RunResult RunFromStartRestoreWithInput(vector<int_t> in)
   {
     regA = std::move(in);
 
@@ -301,12 +305,19 @@ struct Program {
     instructions = std::move(back);
     return res;
   }
-
-  RunResult Run(std::function<int()> inputFct = GetInput, int outputSizeBreak = 0, char outChar = 0)
+  int count = 0;
+  RunResult Run(std::function<int_t()> inputFct = GetInput, int outputSizeBreak = 0, int quota = 0, char outChar = 0)
   {
+    if (quota != 0)
+      count = 0;
+    
     bool log = false;
     while (instructions[crPos] != 99)
     {
+      count++;
+      if (count == quota)
+        return RunResult::quotaend;
+
       auto inst = (size_t)instructions[crPos] % 100;
       const auto& instData = myMap.find(inst)->second;
 
@@ -315,7 +326,11 @@ struct Program {
       logDataStream.str("");
 
       if (instData.opCode == 3 && regA.empty())
+      {
+        int i = 0;
+        i++;
         regA.push_back(inputFct());
+      }
 
       bool adv = instData.exec();
       if (adv)
