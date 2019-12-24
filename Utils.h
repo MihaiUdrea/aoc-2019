@@ -243,11 +243,14 @@ void toConsole(Point p, string c, int sleep = -1) {
 struct to2DsFlags {
   enum DisplayMode
   {
-    full_header,
-    no_header,
-    cols_count,
-    line_count
+    no_header   = 0,
+    cols_count  = 1 << 0,
+    line_count  = 1 << 1,
+    full_header = 0b011,    
+    depth_on   =  1 << 2
   };
+
+  
 };
 
 template <class _Col>
@@ -273,14 +276,21 @@ pair<Point, Point> MinMax(const _Col& _Collection, std::function<Point(const typ
 
 // auto ss = to2Ds(vals, [](auto& l) { return l.x; }, [](auto& l) { return string() + l.ch; }, to2DsFlags::full_header, '.', 1);
 template <class _Col>
-string to2Ds(const _Col& _Collection, std::function<Point(const typename _Col::value_type&, size_t)> toPtFct, std::function<string(const typename _Col::value_type&)> toStringFct,
-  to2DsFlags::DisplayMode mode = to2DsFlags::no_header, char fill = ' ', int charWidth = 1, Point min = {}, Point max = {})
+string to2Ds(const _Col& _Collection, 
+  std::function<Point(const typename _Col::value_type&, size_t)> toPtFct, 
+  std::function<string(const typename _Col::value_type&)> toStringFct,
+  int mode = to2DsFlags::no_header, 
+  char fill = ' ', 
+  int charWidth = 1, 
+  Point min = {}, Point max = {})
 {
   map<Point, string> flatList;
   size_t idx = 0;
   for_each(_Collection.begin(), _Collection.end(), [&](auto& el) {
     Point pt = toPtFct(el, idx++);
-    pt.z = 0;
+    
+    if(mode & to2DsFlags::depth_on == 0) pt.z = 0;
+
     string str = toStringFct(el);
     flatList[pt] = str;
     });
@@ -291,11 +301,14 @@ string to2Ds(const _Col& _Collection, std::function<Point(const typename _Col::v
   auto limY = minmax_element(flatList.begin(), flatList.end(), [](auto& l, auto& r) {
     return l.first.y < r.first.y;
     });
+  auto limZ = minmax_element(flatList.begin(), flatList.end(), [](auto& l, auto& r) {
+    return l.first.z < r.first.z;
+    });
 
   if (min == max)
   {
-    min = Point{ limX.first->first.x, limY.first->first.y };
-    max = Point{ limX.second->first.x, limY.second->first.y };
+    min = Point{ limX.first->first.x, limY.first->first.y, limZ.first->first.z };
+    max = Point{ limX.second->first.x, limY.second->first.y, limZ.second->first.z };
   }
 
   int minCol = min.x;
@@ -305,6 +318,15 @@ string to2Ds(const _Col& _Collection, std::function<Point(const typename _Col::v
 
   int minLine = min.y;
   int lastLine = max.y + 1;
+
+  int minPlane = min.z;
+  int maxPlane = max.z + 1;
+
+  if (mode & to2DsFlags::depth_on == 0)
+  {
+    minPlane = 0;
+    maxPlane = 1;
+  }
 
   stringstream out;
 
@@ -339,24 +361,30 @@ string to2Ds(const _Col& _Collection, std::function<Point(const typename _Col::v
     out << endl;
   };
 
-  if (mode == to2DsFlags::full_header || mode == to2DsFlags::cols_count)
-    topHeader(minCol, lastCol);
-
-  for (auto l : irange(minLine, lastLine))
+  for (auto z : irange(minPlane, maxPlane))
   {
-    if (mode == to2DsFlags::full_header || mode == to2DsFlags::line_count)
-      out << right << std::setfill(' ') << setw(4) << l;
+    if (mode & to2DsFlags::depth_on)
+      out << "\nLevel: " << z << endl;
 
-    for (auto c : irange(minCol, lastCol))
+    if (mode & to2DsFlags::cols_count)
+      topHeader(minCol, lastCol);
+
+    for (auto l : irange(minLine, lastLine))
     {
-      Point crPt{ c, l, 0 };
+      if (mode & to2DsFlags::line_count)
+        out << right << std::setfill(' ') << setw(4) << l;
 
-      if (auto where = flatList.find(crPt); where != flatList.end())
-        out << setw(charWidth) << where->second;
-      else
-        out << setw(charWidth) << fill;
+      for (auto c : irange(minCol, lastCol))
+      {
+        Point crPt{ c, l, z };
+
+        if (auto where = flatList.find(crPt); where != flatList.end())
+          out << setw(charWidth) << where->second;
+        else
+          out << setw(charWidth) << fill;
+      }
+      out << endl;
     }
-    out << endl;
   }
   //Sleep(1000);
   //system("pause");
