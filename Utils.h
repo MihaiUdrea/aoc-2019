@@ -128,7 +128,7 @@ vector<string> Tokenize(const string& inStr, const regex& sepRx)
   return list;
 }
 
-vector<string> GetLines(string& inStr)
+vector<string> GetLines(const string& inStr)
 {
   return Tokenize(inStr, lineRxToken);
 }
@@ -159,17 +159,19 @@ inline bool contains_pred(const _Col& _Collection, _Pr _Pred)
   return find_if(_Collection.begin(), _Collection.end(), _Pred) != _Collection.end();
 }
 
+using my_int = LONGLONG;
+
 struct Point
 {
-  int x = 0;
-  int y = 0;
-  int z = 0;
+  my_int x = 0;
+  my_int y = 0;
+  my_int z = 0;
 
   auto operator<=>(const Point&) const = default;
   auto operator+(const Point& l) const { return Point{ x + l.x, y + l.y, z + l.z }; };
   auto operator-(const Point& l) const { return Point{ x - l.x, y - l.y, z - l.z }; };
 
-  int GetAxys(int ax) const
+  my_int GetAxys(my_int ax) const
   {
     switch (ax)
     {
@@ -185,7 +187,7 @@ struct Point
     return -1;
   }
 
-  void IncAxyx(int ax, int v)
+  void IncAxyx(my_int ax, my_int v)
   {
     switch (ax)
     {
@@ -204,7 +206,7 @@ struct Point
   }
 };
 
-static int ManhDist(Point a)
+static my_int ManhDist(Point a)
 {
   return abs(a.x) + abs(a.y) + abs(a.z);
 }
@@ -216,8 +218,8 @@ void toConsole(Point p, const char* c, int length, int sleep = -1) {
   COORD here;
   HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
-  here.X = p.x;
-  here.Y = p.y;
+  here.X = (SHORT)p.x;
+  here.Y = (SHORT)p.y;
   WriteConsoleOutputCharacterA(hStdOut, c, length, here, &dw);
 
   if (sleep > 0)
@@ -230,8 +232,8 @@ void toConsole(Point p, string c, int sleep = -1) {
   COORD here;
   HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
-  here.X = p.x;
-  here.Y = p.y;
+  here.X = (SHORT)p.x;
+  here.Y = (SHORT)p.y;
   WriteConsoleOutputCharacterA(hStdOut, c.c_str(), c.size(), here, &dw);
 
   if (sleep > 0)
@@ -278,6 +280,7 @@ string to2Ds(const _Col& _Collection, std::function<Point(const typename _Col::v
   size_t idx = 0;
   for_each(_Collection.begin(), _Collection.end(), [&](auto& el) {
     Point pt = toPtFct(el, idx++);
+    pt.z = 0;
     string str = toStringFct(el);
     flatList[pt] = str;
     });
